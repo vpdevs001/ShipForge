@@ -1,9 +1,18 @@
 "use client";
 
-import type { UserMenuUser } from "@/components/user/user-menu";
+import { format } from "date-fns";
+import Link from "next/link";
+
+import {
+  getDisplayName,
+  getInitials,
+} from "@/components/user/user-menu";
 import { statusBadge, statusButtonClass } from "@/features/dashboard/lib/status-styles";
+import type { UserSubscription } from "@/features/dashboard/lib/types";
+import { PLAN_DETAILS } from "@/features/settings/lib/plan-details";
+import type { SettingsProfile } from "@/features/settings/types/settings";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,22 +27,193 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const MOCK_USER: UserMenuUser = {
-  name: "Alex Chen",
-  email: "alex@acme.dev",
-  image: null,
+type SettingsContentProps = {
+  profile: SettingsProfile;
+  subscription: UserSubscription;
+  billingPortalUrl: string | null;
 };
 
-export function SettingsContent() {
-  const user = MOCK_USER;
-  const displayName = user.name ?? "User";
-  const initials = displayName
-    .split(/\s+/)
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+function formatRenewalDate(renewsAt: string | null): string | null {
+  if (!renewsAt) {
+    return null;
+  }
 
+  return format(new Date(renewsAt), "MMMM d, yyyy");
+}
+
+function getSubscriptionStatusLabel(status: UserSubscription["status"]): string {
+  if (status === "active") {
+    return "active";
+  }
+
+  if (status === "trialing") {
+    return "trialing";
+  }
+
+  return "canceled";
+}
+
+function ProfileTab({ profile }: { profile: SettingsProfile }) {
+  const displayName = getDisplayName(profile);
+  const initials = getInitials(profile);
+  const memberSince = format(new Date(profile.memberSince), "MMMM d, yyyy");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>
+          Account information from your GitHub sign-in.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Avatar size="lg">
+            {profile.image ? (
+              <AvatarImage src={profile.image} alt={displayName} />
+            ) : null}
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium">{displayName}</p>
+            <p className="text-xs text-muted-foreground">{profile.email}</p>
+            <p className="text-xs text-muted-foreground">Member since {memberSince}</p>
+          </div>
+        </div>
+        <Separator />
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Display name</Label>
+            <Input id="name" defaultValue={profile.name} readOnly />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              defaultValue={profile.email}
+              readOnly
+            />
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <p className="text-xs text-muted-foreground">
+          Profile details are managed by GitHub. Update them in your GitHub
+          account settings.
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function SubscriptionTab({
+  subscription,
+  billingPortalUrl,
+}: {
+  subscription: UserSubscription;
+  billingPortalUrl: string | null;
+}) {
+  const planDetails = PLAN_DETAILS[subscription.plan];
+  const renewalDate = formatRenewalDate(subscription.renewsAt);
+  const statusLabel = getSubscriptionStatusLabel(subscription.status);
+
+  const isActive = subscription.status === "active" || subscription.status === "trialing";
+
+  let cardBorderClass = "border-border";
+  let planTextClass = "text-foreground";
+  let statusTextClass = "text-muted-foreground";
+  let badgeTone: "success" | "neutral" | "warning" = "neutral";
+
+  if (isActive) {
+    cardBorderClass = "border-green-500/25";
+    planTextClass = "text-green-800 dark:text-green-300";
+    statusTextClass = "text-green-700 dark:text-green-400";
+    badgeTone = "success";
+  }
+
+  if (subscription.status === "canceled") {
+    badgeTone = "warning";
+  }
+
+  return (
+    <Card className={cardBorderClass}>
+      <CardHeader>
+        <CardTitle>Subscription</CardTitle>
+        <CardDescription>
+          Manage your plan and billing for AI code reviews.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div
+          className={cn(
+            "flex flex-wrap items-center justify-between gap-4 rounded-none border p-4",
+            isActive
+              ? "border-green-500/30 bg-green-500/5"
+              : "border-border bg-muted/30"
+          )}
+        >
+          <div>
+            <p className={cn("font-medium", planTextClass)}>
+              {planDetails.label} plan
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Status:{" "}
+              <span className={statusTextClass}>{statusLabel}</span>
+            </p>
+            {renewalDate ? (
+              <p className="text-xs text-muted-foreground">
+                Renews {renewalDate}
+              </p>
+            ) : null}
+          </div>
+          <span className={statusBadge(badgeTone)}>{planDetails.label}</span>
+        </div>
+        <ul className="space-y-2 text-xs text-muted-foreground">
+          {planDetails.features.map((feature) => (
+            <li key={feature}>{feature}</li>
+          ))}
+        </ul>
+      </CardContent>
+      <CardFooter className="flex flex-wrap gap-2">
+        {billingPortalUrl ? (
+          <Button
+            nativeButton={false}
+            render={<Link href={billingPortalUrl} target="_blank" />}
+            variant="outline"
+            className={cn(statusButtonClass.success, "border-green-500/50")}
+          >
+            Manage billing
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            disabled
+            className={cn(statusButtonClass.success, "border-green-500/50")}
+          >
+            Manage billing
+          </Button>
+        )}
+        <Button variant="ghost" disabled>
+          Change plan
+        </Button>
+        <Button
+          variant="outline"
+          disabled={subscription.status === "canceled"}
+          className={statusButtonClass.danger}
+        >
+          Cancel subscription
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function SettingsContent({
+  profile,
+  subscription,
+  billingPortalUrl,
+}: SettingsContentProps) {
   return (
     <div className="flex flex-1 flex-col p-6">
       <Tabs defaultValue="profile" className="w-full max-w-2xl">
@@ -43,96 +223,14 @@ export function SettingsContent() {
         </TabsList>
 
         <TabsContent value="profile" className="mt-6 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>
-                Basic account information from your sign-in provider.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Avatar size="lg">
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-              <Separator />
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Display name</Label>
-                  <Input id="name" defaultValue={user.name ?? ""} readOnly />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue={user.email ?? ""}
-                    readOnly
-                  />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button disabled className={statusButtonClass.success}>
-                Save changes
-              </Button>
-            </CardFooter>
-          </Card>
+          <ProfileTab profile={profile} />
         </TabsContent>
 
         <TabsContent value="subscription" className="mt-6 space-y-6">
-          <Card className="border-green-500/25">
-            <CardHeader>
-              <CardTitle>Subscription</CardTitle>
-              <CardDescription>
-                Manage your plan and billing for AI code reviews.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-none border border-green-500/30 bg-green-500/5 p-4">
-                <div>
-                  <p className="font-medium text-green-800 dark:text-green-300">
-                    Pro plan
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Status:{" "}
-                    <span className="text-green-700 dark:text-green-400">
-                      active
-                    </span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Renews July 4, 2026
-                  </p>
-                </div>
-                <span className={statusBadge("success")}>Pro</span>
-              </div>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li>Unlimited AI reviews on connected repos</li>
-                <li>Public and private repository support</li>
-                <li>Priority support on Pro and Team plans</li>
-              </ul>
-            </CardContent>
-            <CardFooter className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                className={cn(statusButtonClass.success, "border-green-500/50")}
-              >
-                Manage billing
-              </Button>
-              <Button variant="ghost">Change plan</Button>
-              <Button
-                variant="outline"
-                className={statusButtonClass.danger}
-              >
-                Cancel subscription
-              </Button>
-            </CardFooter>
-          </Card>
+          <SubscriptionTab
+            subscription={subscription}
+            billingPortalUrl={billingPortalUrl}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -38,11 +38,11 @@ type UserMenuProps = {
   className?: string;
 };
 
-function getDisplayName(user: UserMenuUser) {
+export function getDisplayName(user: UserMenuUser) {
   return user.name?.trim() || user.email?.split("@")[0] || "User";
 }
 
-function getInitials(user: UserMenuUser) {
+export function getInitials(user: UserMenuUser) {
   const source = user.name?.trim() || user.email || "U";
   const parts = source.split(/\s+/).filter(Boolean);
 
