@@ -95,7 +95,11 @@ export const reviewPullRequest = inngest.createFunction(
     await step.run("mark-reviewed", async () => {
       await prisma.pullRequest.update({
         where: { id: pullRequestId },
-        data: { status: "reviewed" },
+        data: {
+          status: "reviewed",
+          reviewComment: review,
+          reviewedAt: new Date(),
+        },
       });
     });
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FolderGit2Icon,
+  GitPullRequestIcon,
   LayoutDashboardIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import {
 const NAV_ICONS = {
   "layout-dashboard": LayoutDashboardIcon,
   "folder-git-2": FolderGit2Icon,
+  "git-pull-request": GitPullRequestIcon,
   github: GithubIcon,
   settings: SettingsIcon,
 } as const;

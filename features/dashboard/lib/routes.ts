@@ -1,6 +1,7 @@
 export const DASHBOARD_ROUTES = {
   overview: "/dashboard",
   repos: "/dashboard/repos",
+  pullRequests: "/dashboard/pull-requests",
   github: "/dashboard/github",
   settings: "/dashboard/settings",
 } as const;
@@ -18,6 +19,11 @@ export const DASHBOARD_NAV_ITEMS = [
     title: "Repositories",
     href: DASHBOARD_ROUTES.repos,
     icon: "folder-git-2" as const,
+  },
+  {
+    title: "Pull Requests",
+    href: DASHBOARD_ROUTES.pullRequests,
+    icon: "git-pull-request" as const,
   },
   {
     title: "GitHub App",
