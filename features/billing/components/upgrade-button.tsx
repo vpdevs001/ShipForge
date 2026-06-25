@@ -1,26 +1,14 @@
-/**
- * Client button that opens Razorpay Checkout for the Pro plan.
- *
- * Razorpay Checkout is a hosted payment modal loaded from their CDN script.
- * We create the subscription on the server first, then pass `subscription_id`
- * to Checkout so Razorpay can collect payment and fire webhooks to activate Pro.
- *
- * @module features/billing/components/upgrade-button
- */
-
 "use client";
 
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useState } from "react";
 import { toast } from "sonner";
-
-import { statusButtonClass } from "@/features/dashboard/lib/status-styles";
-import { startProSubscription } from "@/lib/actions/billing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { statusButtonClass } from "@/features/dashboard/lib/status-style";
+import { startProSubscription } from "@/lib/billing";
 
-/** Minimal type for the global `window.Razorpay` constructor from checkout.js. */
 type RazorpayCheckout = new (options: Record<string, unknown>) => {
   open: () => void;
 };
@@ -31,14 +19,8 @@ declare global {
   }
 }
 
-/** Official Razorpay Checkout script — loads the payment modal in the browser. */
 const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 
-/**
- * Renders "Upgrade to Pro" and launches Razorpay Checkout on click.
- *
- * @returns Button plus lazy-loaded Razorpay script tag.
- */
 export function UpgradeButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -58,7 +40,6 @@ export function UpgradeButton() {
     setLoading(true);
 
     try {
-      // Server creates the Razorpay subscription and returns its id for Checkout.
       const { subscriptionId } = await startProSubscription();
 
       const checkout = new window.Razorpay({
@@ -67,8 +48,9 @@ export function UpgradeButton() {
         name: "Chai Code Reviewer",
         description: "Pro plan — unlimited AI reviews",
         handler: () => {
-          // Payment UI closed successfully — webhook will flip plan to Pro shortly.
-          toast.success("Payment successful! Your Pro plan will activate shortly.");
+          toast.success(
+            "Payment successful! Your Pro plan will activate shortly."
+          );
           router.refresh();
         },
       });
@@ -82,10 +64,9 @@ export function UpgradeButton() {
       setLoading(false);
     }
   }
-
   return (
     <>
-      <Script src={RAZORPAY_SCRIPT_URL} strategy="lazyOnload" />
+      <Script src={RAZORPAY_SCRIPT_URL} strategy="lazyOnload"></Script>
       <Button
         onClick={handleUpgrade}
         disabled={loading}

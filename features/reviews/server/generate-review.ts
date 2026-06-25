@@ -1,17 +1,8 @@
-/**
- * AI-powered pull request review generation.
- *
- * After Pinecone returns relevant diff chunks (and optional repo-wide context
- * from a prior sync), this module calls the LLM via the Vercel AI SDK and
- * returns markdown feedback for posting on GitHub.
- */
 import { generateText } from "ai";
-import { openrouter } from "@/features/ai-sdk";
+import { openrouter } from "@/features/ai";
 
-/** OpenRouter model id — free tier suitable for classroom demos */
 const REVIEW_MODEL = "openrouter/free";
 
-/** System instructions: checklist, tone, and markdown output structure */
 const SYSTEM_PROMPT = `You are an expert code reviewer with deep knowledge of software engineering best practices, security, and performance optimization.
 
 Review the provided unified diff chunks and write a concise, actionable pull request review in markdown.
@@ -51,7 +42,6 @@ Then use this structure if there are findings:
 - If the diff looks clean with no concerns, say so clearly in 1–2 sentences — do not invent problems
 - Tailor feedback to the repository language and conventions visible in the diff`;
 
-/** Inputs assembled by the Inngest `generate-ai-review` step */
 type ReviewInput = {
   repoFullName: string;
   title: string;
@@ -61,12 +51,6 @@ type ReviewInput = {
   repoContextSnippets: string[];
 };
 
-/**
- * Formats repo-wide Pinecone hits into an extra prompt section.
- *
- * @param repoContextSnippets - Snippets from `buildRepoNamespace` search, if any
- * @returns Markdown section appended to the user prompt, or empty string
- */
 function buildRepoContextSection(repoContextSnippets: string[]) {
   if (repoContextSnippets.length === 0) {
     return "";
@@ -75,22 +59,12 @@ function buildRepoContextSection(repoContextSnippets: string[]) {
   const repoContext = repoContextSnippets.join("\n\n---\n\n");
 
   return `
-
-Related code from the repository (for context only, not part of the change):
-
-${repoContext}`;
+  
+  Related code from the repository (for context only, not part of the change):
+  
+  ${repoContext}`;
 }
 
-/**
- * Calls the LLM to produce a markdown code review.
- *
- * PR diff snippets come from semantic search over the PR namespace; repo
- * snippets (when the user has synced the repo) help the model understand
- * surrounding code that did not change in this PR.
- *
- * @param input - Repository metadata plus retrieved context snippets
- * @returns Markdown review text suitable for `postPrComment`
- */
 export async function generateReview(input: ReviewInput) {
   const context = input.contextSnippets.join("\n\n---\n\n");
   const repoContextSection = buildRepoContextSection(input.repoContextSnippets);
@@ -99,11 +73,11 @@ export async function generateReview(input: ReviewInput) {
     model: openrouter(REVIEW_MODEL),
     system: SYSTEM_PROMPT,
     prompt: `Repository: ${input.repoFullName}
-Pull request title: ${input.title}
-
-Code changes:
-
-${context}${repoContextSection}`,
+  Pull request title: ${input.title}
+  
+  Code changes:
+  
+  ${context}${repoContextSection}`,
   });
 
   return text;

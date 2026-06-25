@@ -1,26 +1,9 @@
-/**
- * Shared types for the pull-request review pipeline.
- *
- * These shapes flow from the GitHub webhook payload through database storage,
- * file fetching, chunking, vector search, and AI review generation.
- */
-
-/**
- * A single changed file from a GitHub pull request, with its unified diff.
- */
 export type PrFile = {
-  /** Repository-relative path, e.g. `src/app/page.tsx` */
   filePath: string;
-  /** Unified diff patch from the GitHub API (`file.patch`) */
+
   patch: string;
 };
 
-/**
- * A slice of code ready to embed in Pinecone.
- *
- * Large files and diffs are split into multiple chunks (see `chunkPrFiles`)
- * so each vector stays within embedding size limits.
- */
 export type CodeChunk = {
   /** Unique id used as the Pinecone record id, e.g. `pr-42--src/foo.ts--part-0` */
   id: string;

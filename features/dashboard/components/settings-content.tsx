@@ -9,19 +9,11 @@
 
 import { format } from "date-fns";
 
-import { CancelSubscriptionButton } from "@/features/billing/components/cancel-subscription-button";
 import { UpgradeButton } from "@/features/billing/components/upgrade-button";
-import {
-  getDisplayName,
-  getInitials,
-} from "@/components/user/user-menu";
-import { statusBadge } from "@/features/dashboard/lib/status-styles";
+
 import type { UserSubscription } from "@/features/dashboard/lib/types";
 import { PLAN_DETAILS } from "@/features/settings/lib/plan-details";
-import type {
-  SettingsProfile,
-  UsageSummary,
-} from "@/features/settings/types/settings";
+
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -36,6 +28,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SettingsProfile } from "@/features/settings/types";
+import { UsageSummary } from "@/features/billing/server/usage";
+import { statusBadge } from "../lib/status-style";
+import { CancelSubscriptionButton } from "@/features/billing/components/cancel-subscription-button";
+import {
+  getDisplayName,
+  getInitials,
+} from "@/features/auth/components/user-menu";
 
 type SettingsContentProps = {
   profile: SettingsProfile;
@@ -63,7 +63,9 @@ function formatRenewalDate(renewsAt: string | null): string | null {
  * @param status - `active`, `trialing`, or `canceled`.
  * @returns Display string for the status line.
  */
-function getSubscriptionStatusLabel(status: UserSubscription["status"]): string {
+function getSubscriptionStatusLabel(
+  status: UserSubscription["status"]
+): string {
   if (status === "active") {
     return "active";
   }
@@ -105,7 +107,9 @@ function ProfileTab({ profile }: { profile: SettingsProfile }) {
           <div>
             <p className="font-medium">{displayName}</p>
             <p className="text-xs text-muted-foreground">{profile.email}</p>
-            <p className="text-xs text-muted-foreground">Member since {memberSince}</p>
+            <p className="text-xs text-muted-foreground">
+              Member since {memberSince}
+            </p>
           </div>
         </div>
         <Separator />
@@ -167,7 +171,8 @@ function SubscriptionTab({
   const renewalDate = formatRenewalDate(subscription.renewsAt);
   const statusLabel = getSubscriptionStatusLabel(subscription.status);
 
-  const isActive = subscription.status === "active" || subscription.status === "trialing";
+  const isActive =
+    subscription.status === "active" || subscription.status === "trialing";
 
   // Visual styling reflects active vs inactive subscription
   let cardBorderClass = "border-border";
@@ -208,8 +213,7 @@ function SubscriptionTab({
               {planDetails.label} plan
             </p>
             <p className="text-xs text-muted-foreground">
-              Status:{" "}
-              <span className={statusTextClass}>{statusLabel}</span>
+              Status: <span className={statusTextClass}>{statusLabel}</span>
             </p>
             {renewalDate ? (
               <p className="text-xs text-muted-foreground">

@@ -1,15 +1,11 @@
-/**
- * Dashboard button to start or re-run repository codebase sync.
- *
- * Sync is optional but improves PR reviews: once `syncRepoCodebase` finishes,
- * `reviewPullRequest` can search the repo Pinecone namespace for code outside
- * the diff. This component shows live status (Sync / Syncing… / Re-sync).
- */
 "use client";
 
-import type { RepoSyncStatus } from "@/features/repo-sync/types/repo-sync";
-import { useSyncRepoMutation } from "@/features/repo-sync/lib/sync-repo-mutation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { githubRepoKeys } from "@/features/github/lib/repos-query";
+import { syncRepoCodebase } from "../actions/repo-sync";
 import { Button } from "@/components/ui/button";
+import { RepoSyncStatus } from "../types";
+import { toast } from "sonner";
 
 type SyncRepoButtonProps = {
   repoFullName: string;
@@ -17,20 +13,19 @@ type SyncRepoButtonProps = {
   syncStatus: RepoSyncStatus | null;
 };
 
-/**
- * @param status - Current sync status from the server or optimistic UI
- * @returns True while a sync is queued or running
- */
-function isSyncInProgress(status: RepoSyncStatus | null) {
+function isSyncing(status: RepoSyncStatus | null, mutationPending: boolean) {
+  if (mutationPending) {
+    return true;
+  }
+
   return status === "pending" || status === "syncing";
 }
 
-/**
- * @param status - Current sync status
- * @returns Button label appropriate for the lifecycle state
- */
-function getButtonLabel(status: RepoSyncStatus | null) {
-  if (isSyncInProgress(status)) {
+function getButtonLabel(
+  status: RepoSyncStatus | null,
+  mutationPending: boolean
+) {
+  if (isSyncing(status, mutationPending)) {
     return "Syncing…";
   }
 
@@ -41,36 +36,36 @@ function getButtonLabel(status: RepoSyncStatus | null) {
   return "Sync";
 }
 
-/**
- * Triggers `repo/sync.requested` via server action and reflects status in the UI.
- *
- * @param props.repoFullName - Repository in `owner/repo` form
- * @param props.branch - Branch to index (passed through to Inngest worker)
- * @param props.syncStatus - Last known status from the repos list query
- * @returns Rendered sync button with disabled state during active sync
- */
-export function SyncRepoButton({
+const SyncRepoButton = ({
   repoFullName,
   branch,
   syncStatus,
-}: SyncRepoButtonProps) {
-  const syncRepo = useSyncRepoMutation();
+}: SyncRepoButtonProps) => {
+  const queryClient = useQueryClient();
 
-  function handleSync() {
-    // Server action upserts RepoSync + sends Inngest event
-    syncRepo.mutate({ repoFullName, branch });
-  }
+  const syncRepo = useMutation({
+    mutationFn: () => syncRepoCodebase(repoFullName, branch),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: githubRepoKeys.all });
+      toast.success(`Repo ${repoFullName} synced successfully`);
+    },
+    onError: (error) => {
+      toast.error(`Failed to sync repo ${repoFullName}: ${error.message}`);
+    },
+  });
 
-  const status = syncRepo.isPending ? "syncing" : syncStatus;
+  const syncing = isSyncing(syncStatus, syncRepo.isPending);
 
   return (
     <Button
       size="sm"
       variant="outline"
-      disabled={syncRepo.isPending || isSyncInProgress(syncStatus)}
-      onClick={handleSync}
+      disabled={syncing}
+      onClick={() => syncRepo.mutate()}
     >
-      {getButtonLabel(status)}
+      {getButtonLabel(syncStatus, syncRepo.isPending)}
     </Button>
   );
-}
+};
+
+export default SyncRepoButton;

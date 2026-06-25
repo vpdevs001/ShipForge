@@ -1,115 +1,102 @@
-/**
- * Reads a user's subscription plan and status from the database.
- *
- * Razorpay webhooks update raw fields (`plan`, `subscriptionStatus`, `subscriptionRenewsAt`).
- * This module translates those into a clean `UserSubscription` object for the UI.
- *
- * @module features/billing/server/subscription
- */
+import type { UserSubscription } from "@/features/dashboard/lib/types";
+import { getRazorpay } from "@/features/billing/lib/razorpay";
+import { db } from "@/lib/db";
+import { user as userSchema } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
-import "server-only";
-
-import type {
-  SubscriptionPlan,
-  UserSubscription,
-} from "@/features/dashboard/lib/types";
-import { prisma } from "@/lib/db";
-
-/** Normalizes the string stored in Prisma to our `SubscriptionPlan` union. */
-function getPlanFromDb(plan: string): SubscriptionPlan {
-  if (plan === "pro") {
-    return "pro";
-  }
-  return "free";
-}
-
-/**
- * Maps database subscription fields to a user-facing status.
- *
- * Pro users who canceled but are still inside the paid period stay `active`
- * until `subscriptionRenewsAt` passes — they keep Pro features until then.
- */
-function getStatusFromDb(
-  plan: SubscriptionPlan,
-  subscriptionStatus: string | null,
-  subscriptionRenewsAt: Date | null
-): UserSubscription["status"] {
-  if (plan !== "pro") {
-    return "active";
-  }
-
-  if (subscriptionStatus === "canceled") {
-    if (subscriptionRenewsAt && subscriptionRenewsAt > new Date()) {
-      return "active";
-    }
-    return "canceled";
-  }
-
-  if (subscriptionStatus === "pending") {
-    return "trialing";
-  }
-
-  if (subscriptionStatus === "active") {
-    return "active";
-  }
-
-  return "canceled";
-}
-
-/** Pro features only apply when plan is pro AND status is still active. */
-function getEffectivePlan(
-  plan: SubscriptionPlan,
-  status: UserSubscription["status"]
-): SubscriptionPlan {
-  if (plan === "pro" && status === "active") {
-    return "pro";
-  }
-
-  return "free";
-}
-
-/**
- * Loads the current subscription snapshot for a user.
- *
- * @param userId - The user whose plan and renewal date we need.
- * @returns `UserSubscription` with effective plan, status, and optional `renewsAt` ISO string.
- */
 export async function getUserSubscription(
   userId: string
 ): Promise<UserSubscription> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      plan: true,
-      subscriptionStatus: true,
-      subscriptionRenewsAt: true,
-    },
-  });
+  const [user] = await db
+    .select({
+      plan: userSchema.plan,
+      subscriptionStatus: userSchema.subscriptionStatus,
+      subscriptionRenewsAt: userSchema.subscriptionRenewsAt,
+    })
+    .from(userSchema)
+    .where(eq(userSchema.id, userId))
+    .limit(1);
 
   if (!user) {
-    return {
-      plan: "free",
-      status: "active",
-      renewsAt: null,
-    };
+    return { plan: "free", status: "active", renewsAt: null };
   }
 
-  const dbPlan = getPlanFromDb(user.plan);
-  const status = getStatusFromDb(
-    dbPlan,
-    user.subscriptionStatus,
-    user.subscriptionRenewsAt
-  );
-  const plan = getEffectivePlan(dbPlan, status);
+  const renewsAt = user.subscriptionRenewsAt?.toISOString() ?? null;
 
-  let renewsAt: string | null = null;
-  if (user.subscriptionRenewsAt) {
-    renewsAt = user.subscriptionRenewsAt.toISOString();
+  if (user.plan !== "pro") {
+    return { plan: "free", status: "active", renewsAt };
   }
 
-  return {
-    plan,
-    status,
-    renewsAt,
-  };
+  if (user.subscriptionStatus === "pending") {
+    return { plan: "free", status: "trialing", renewsAt };
+  }
+
+  if (user.subscriptionStatus === "canceled") {
+    const stillActive =
+      user.subscriptionRenewsAt !== null &&
+      user.subscriptionRenewsAt > new Date();
+
+    if (stillActive) {
+      return { plan: "pro", status: "active", renewsAt };
+    }
+
+    return { plan: "free", status: "canceled", renewsAt };
+  }
+
+  if (user.subscriptionStatus === "active") {
+    return { plan: "pro", status: "active", renewsAt };
+  }
+
+  return { plan: "free", status: "canceled", renewsAt };
+}
+
+export async function createProSubscription(userId: string) {
+  const subscription = await getUserSubscription(userId);
+
+  if (subscription.plan === "pro" && subscription.status === "active") {
+    throw new Error("You already have an active Pro subscription.");
+  }
+
+  const planId = process.env.RAZORPAY_PLAN_ID;
+  if (!planId) {
+    throw new Error("Razorpay plan is not configured.");
+  }
+
+  const razorpay = getRazorpay();
+  const razorpaySubscription = await razorpay.subscriptions.create({
+    plan_id: planId,
+    total_count: 12,
+    customer_notify: 1,
+    notes: { userId },
+  });
+
+  await db
+    .update(userSchema)
+    .set({
+      razorpaySubscriptionId: razorpaySubscription.id,
+      subscriptionStatus: "pending",
+    })
+    .where(eq(userSchema.id, userId));
+
+  return { subscriptionId: razorpaySubscription.id };
+}
+
+export async function cancelProSubscription(userId: string) {
+  const [user] = await db
+    .select({ razorpaySubscriptionId: userSchema.razorpaySubscriptionId })
+    .from(userSchema)
+    .where(eq(userSchema.id, userId))
+    .limit(1);
+
+  if (!user?.razorpaySubscriptionId) {
+    throw new Error("No active subscription found.");
+  }
+
+  const razorpay = getRazorpay();
+  await razorpay.subscriptions.cancel(user.razorpaySubscriptionId, 1);
+
+  await db
+    .update(userSchema)
+    .set({ subscriptionStatus: "canceled" })
+    .where(eq(userSchema.id, userId));
 }

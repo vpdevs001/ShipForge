@@ -1,13 +1,5 @@
-/**
- * Sign-in page — GitHub OAuth entry point.
- *
- * Reads an optional `callbackUrl` search param so flows like GitHub App
- * installation can return the user to the right place after authentication.
- */
-
 import Image from "next/image";
 import type { Metadata } from "next";
-import { GithubSignInForm } from "@/components/auth/github-sign-in-form";
 import {
   Card,
   CardContent,
@@ -21,6 +13,7 @@ import {
   FieldGroup,
   FieldSet,
 } from "@/components/ui/field";
+import { GithubSignInForm } from "@/features/auth/components/github-sign-in-form";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -31,15 +24,8 @@ type SignInPageProps = {
   searchParams: Promise<{ callbackUrl?: string }>;
 };
 
-/**
- * Renders the sign-in card with logo and GitHub OAuth button.
- *
- * @param searchParams - Async search params (Next.js 15+) with optional `callbackUrl`.
- * @returns The sign-in page UI inside the auth layout.
- */
-export default async function SignInPage({ searchParams }: SignInPageProps) {
+const SignInPage = async ({ searchParams }: SignInPageProps) => {
   const { callbackUrl } = await searchParams;
-
   return (
     <Card className="border-border/80 shadow-sm">
       <CardHeader className="items-center text-center">
@@ -64,8 +50,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             <Field>
               <GithubSignInForm callbackUrl={callbackUrl} />
               <FieldDescription className="text-center">
-                We only request the permissions needed to identify your
-                account. You can revoke access anytime from GitHub settings.
+                We only request the permissions needed to identify your account.
+                You can revoke access anytime from GitHub settings.
               </FieldDescription>
             </Field>
           </FieldGroup>
@@ -73,4 +59,6 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default SignInPage;

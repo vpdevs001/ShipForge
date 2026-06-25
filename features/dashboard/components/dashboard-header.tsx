@@ -31,7 +31,9 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
       <div className="flex min-w-0 flex-col">
         <h1 className="truncate text-sm font-medium">{title}</h1>
         {description ? (
-          <p className="truncate text-xs text-muted-foreground">{description}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {description}
+          </p>
         ) : null}
       </div>
     </header>

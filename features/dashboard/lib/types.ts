@@ -1,12 +1,4 @@
-/**
- * Shared TypeScript types for the dashboard feature.
- *
- * These types describe the shape of data shown across dashboard pages —
- * repositories, GitHub App connection status, and subscription info.
- * Keeping them in one place ensures server and client code stay in sync.
- */
-
-import type { RepoSyncStatus } from "@/features/repo-sync/types/repo-sync";
+export type RepoSyncStatus = "pending" | "syncing" | "synced" | "failed";
 
 /** Whether a repository is visible to everyone or only to collaborators. */
 export type RepoVisibility = "public" | "private";
