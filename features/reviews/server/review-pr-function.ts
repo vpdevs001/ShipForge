@@ -103,7 +103,7 @@ export const reviewPullRequest = inngest.createFunction(
         pullRequestRecord.installationId,
         pullRequestRecord.repoFullName,
         pullRequestRecord.prNumber,
-        review
+        review.text
       );
     });
 
