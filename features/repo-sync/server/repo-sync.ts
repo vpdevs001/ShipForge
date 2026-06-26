@@ -176,14 +176,27 @@ export async function getRepoSyncStatuses(repoFullNames: string[]) {
 export async function triggerRepoSync(
   installationId: number,
   repoFullName: string,
-  branch: string
+  branch: string,
+  workspaceId: string
 ) {
   const [sync] = await db
     .insert(repoSync)
-    .values({ installationId, repoFullName, branch, status: "pending" })
+    .values({
+      workspaceId,
+      installationId,
+      repoFullName,
+      branch,
+      status: "pending",
+    })
     .onConflictDoUpdate({
       target: repoSync.repoFullName,
-      set: { installationId, branch, status: "pending" },
+      set: {
+        workspaceId,
+        installationId,
+        branch,
+        status: "pending",
+        updatedAt: new Date(),
+      },
     })
     .returning();
 

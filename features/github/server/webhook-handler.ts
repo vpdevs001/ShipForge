@@ -66,7 +66,7 @@ export async function handleGithubWebhook(request: Request) {
     if (!allowed) {
       await db
         .update(pullRequestSchema)
-        .set({ status: "rate_limited" })
+        .set({ reviewStatus: "rate_limited" })
         .where(eq(pullRequestSchema.id, pullRequest.id));
       return Response.json({ received: true, rateLimited: true });
     }

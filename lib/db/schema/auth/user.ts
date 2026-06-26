@@ -10,8 +10,4 @@ export const user = pgTable("user", {
   image: text("image"),
   createdAt: timestamp("createdAt").notNull(),
   updatedAt: timestamp("updatedAt").notNull(),
-  plan: text("plan").notNull().default("FREE"),
-  razorpaySubscriptionId: text("razorpaySubscriptionId"),
-  subscriptionStatus: text("subscriptionStatus"),
-  subscriptionRenewsAt: timestamp("subscriptionRenewsAt"),
 });

@@ -1,8 +1,9 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 import { db } from "@/lib/db";
-import { user as userSchema } from "@/lib/db/schema";
+import { workspaceSubscription, billingPlan } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getPrimaryWorkspaceId } from "@/lib/db/workspace";
 
 type RazorpaySubscriptionPayload = {
   id: string;
@@ -62,16 +63,23 @@ export async function POST(request: Request) {
     return Response.json({ error: "Missing subscription" }, { status: 400 });
   }
 
-  const [existingUser] = await db
-    .select({ id: userSchema.id })
-    .from(userSchema)
-    .where(eq(userSchema.razorpaySubscriptionId, subscription.id))
+  // Look up workspace by razorpaySubscriptionId
+  const [existingSub] = await db
+    .select({ workspaceId: workspaceSubscription.workspaceId })
+    .from(workspaceSubscription)
+    .where(eq(workspaceSubscription.razorpaySubscriptionId, subscription.id))
     .limit(1);
 
-  const userId = existingUser?.id ?? subscription.notes?.userId ?? null;
-  if (!userId) {
+  let workspaceId: string | null = existingSub?.workspaceId ?? null;
+
+  // Fallback: notes.userId → workspaceId
+  if (!workspaceId && subscription.notes?.userId) {
+    workspaceId = await getPrimaryWorkspaceId(subscription.notes.userId);
+  }
+
+  if (!workspaceId) {
     console.error(
-      "Razorpay webhook: no user for subscription",
+      "Razorpay webhook: no workspace for subscription",
       subscription.id,
       event.event
     );
@@ -82,48 +90,61 @@ export async function POST(request: Request) {
     ? new Date(subscription.current_end * 1000)
     : null;
 
+  // Find plan IDs once (needed for activated / completed events)
+  const [proPlan] = await db
+    .select({ id: billingPlan.id })
+    .from(billingPlan)
+    .where(eq(billingPlan.name, "pro"))
+    .limit(1);
+
+  const [freePlan] = await db
+    .select({ id: billingPlan.id })
+    .from(billingPlan)
+    .where(eq(billingPlan.name, "free"))
+    .limit(1);
+
   if (event.event === "subscription.activated") {
     await db
-      .update(userSchema)
+      .update(workspaceSubscription)
       .set({
-        plan: "pro",
+        planId: proPlan!.id,
         razorpaySubscriptionId: subscription.id,
-        subscriptionStatus: "active",
-        subscriptionRenewsAt: renewsAt,
+        status: "active",
+        currentPeriodEnd: renewsAt,
       })
-      .where(eq(userSchema.id, userId));
+      .where(eq(workspaceSubscription.workspaceId, workspaceId));
   }
 
   if (event.event === "subscription.charged") {
     await db
-      .update(userSchema)
-      .set({ subscriptionRenewsAt: renewsAt })
-      .where(eq(userSchema.id, userId));
+      .update(workspaceSubscription)
+      .set({ currentPeriodEnd: renewsAt })
+      .where(eq(workspaceSubscription.workspaceId, workspaceId));
   }
 
   if (event.event === "subscription.cancelled") {
     await db
-      .update(userSchema)
-      .set({ subscriptionStatus: "canceled" })
-      .where(eq(userSchema.id, userId));
+      .update(workspaceSubscription)
+      .set({ status: "cancelled" })
+      .where(eq(workspaceSubscription.workspaceId, workspaceId));
   }
 
   if (event.event === "subscription.halted") {
     await db
-      .update(userSchema)
-      .set({ subscriptionStatus: "halted" })
-      .where(eq(userSchema.id, userId));
+      .update(workspaceSubscription)
+      .set({ status: "past_due" })
+      .where(eq(workspaceSubscription.workspaceId, workspaceId));
   }
 
   if (event.event === "subscription.completed") {
     await db
-      .update(userSchema)
+      .update(workspaceSubscription)
       .set({
-        plan: "free",
-        subscriptionStatus: "canceled",
-        subscriptionRenewsAt: null,
+        planId: freePlan!.id,
+        status: "cancelled",
+        currentPeriodEnd: null,
       })
-      .where(eq(userSchema.id, userId));
+      .where(eq(workspaceSubscription.workspaceId, workspaceId));
   }
 
   return Response.json({ received: true });

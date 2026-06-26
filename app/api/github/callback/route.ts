@@ -1,6 +1,7 @@
 import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/routes";
 import { saveInstallation } from "@/features/github/server/installation";
 import { getServerSession } from "@/features/auth/actions";
+import { getPrimaryWorkspaceId } from "@/lib/db/workspace";
 import { redirect } from "next/navigation";
 
 function buildSignInCallbackUrl(installationId: string | null): string {
@@ -24,7 +25,14 @@ export async function GET(request: Request) {
   }
 
   if (installationId) {
-    await saveInstallation(session.user.id, parseInt(installationId, 10));
+    const workspaceId = await getPrimaryWorkspaceId(session.user.id);
+    if (workspaceId) {
+      await saveInstallation(
+        session.user.id,
+        parseInt(installationId, 10),
+        workspaceId
+      );
+    }
   }
 
   redirect(DASHBOARD_ROUTES.github);

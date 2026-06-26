@@ -21,7 +21,7 @@ export const reviewPullRequest = inngest.createFunction(
     const pullRequestRecord = await step.run("mark-processing", async () => {
       const [prRecord] = await db
         .update(pullRequest)
-        .set({ status: "processing" })
+        .set({ reviewStatus: "processing" })
         .where(eq(pullRequest.id, pullRequestId))
         .returning();
       return prRecord;
@@ -42,7 +42,7 @@ export const reviewPullRequest = inngest.createFunction(
       await step.run("mark-reviewed-no-code", async () => {
         await db
           .update(pullRequest)
-          .set({ status: "reviewed" })
+          .set({ reviewStatus: "reviewed", reviewedAt: new Date() })
           .where(eq(pullRequest.id, pullRequestId));
       });
 
@@ -111,8 +111,7 @@ export const reviewPullRequest = inngest.createFunction(
       await db
         .update(pullRequest)
         .set({
-          status: "reviewed",
-          reviewComment: review,
+          reviewStatus: "reviewed",
           reviewedAt: new Date(),
         })
         .where(eq(pullRequest.id, pullRequestId));

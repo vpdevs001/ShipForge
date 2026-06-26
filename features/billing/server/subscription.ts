@@ -1,49 +1,53 @@
 import type { UserSubscription } from "@/features/dashboard/lib/types";
 import { getRazorpay } from "@/features/billing/lib/razorpay";
 import { db } from "@/lib/db";
-import { user as userSchema } from "@/lib/db/schema";
+import { workspaceSubscription, billingPlan } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getPrimaryWorkspaceId } from "@/lib/db/workspace";
 
 export async function getUserSubscription(
   userId: string
 ): Promise<UserSubscription> {
-  const [user] = await db
-    .select({
-      plan: userSchema.plan,
-      subscriptionStatus: userSchema.subscriptionStatus,
-      subscriptionRenewsAt: userSchema.subscriptionRenewsAt,
-    })
-    .from(userSchema)
-    .where(eq(userSchema.id, userId))
-    .limit(1);
+  const workspaceId = await getPrimaryWorkspaceId(userId);
 
-  if (!user) {
+  if (!workspaceId) {
     return { plan: "free", status: "active", renewsAt: null };
   }
 
-  const renewsAt = user.subscriptionRenewsAt?.toISOString() ?? null;
+  const [sub] = await db
+    .select({
+      planName: billingPlan.name,
+      status: workspaceSubscription.status,
+      currentPeriodEnd: workspaceSubscription.currentPeriodEnd,
+    })
+    .from(workspaceSubscription)
+    .innerJoin(billingPlan, eq(workspaceSubscription.planId, billingPlan.id))
+    .where(eq(workspaceSubscription.workspaceId, workspaceId))
+    .limit(1);
 
-  if (user.plan !== "pro") {
+  if (!sub) {
+    return { plan: "free", status: "active", renewsAt: null };
+  }
+
+  const renewsAt = sub.currentPeriodEnd?.toISOString() ?? null;
+
+  if (sub.planName !== "pro") {
     return { plan: "free", status: "active", renewsAt };
   }
 
-  if (user.subscriptionStatus === "pending") {
+  if (sub.status === "trialing") {
     return { plan: "free", status: "trialing", renewsAt };
   }
 
-  if (user.subscriptionStatus === "canceled") {
+  if (sub.status === "cancelled") {
     const stillActive =
-      user.subscriptionRenewsAt !== null &&
-      user.subscriptionRenewsAt > new Date();
-
-    if (stillActive) {
-      return { plan: "pro", status: "active", renewsAt };
-    }
-
-    return { plan: "free", status: "canceled", renewsAt };
+      sub.currentPeriodEnd !== null && sub.currentPeriodEnd > new Date();
+    return stillActive
+      ? { plan: "pro", status: "active", renewsAt }
+      : { plan: "free", status: "canceled", renewsAt };
   }
 
-  if (user.subscriptionStatus === "active") {
+  if (sub.status === "active") {
     return { plan: "pro", status: "active", renewsAt };
   }
 
@@ -51,8 +55,10 @@ export async function getUserSubscription(
 }
 
 export async function createProSubscription(userId: string) {
-  const subscription = await getUserSubscription(userId);
+  const workspaceId = await getPrimaryWorkspaceId(userId);
+  if (!workspaceId) throw new Error("No workspace found for user.");
 
+  const subscription = await getUserSubscription(userId);
   if (subscription.plan === "pro" && subscription.status === "active") {
     throw new Error("You already have an active Pro subscription.");
   }
@@ -67,36 +73,59 @@ export async function createProSubscription(userId: string) {
     plan_id: planId,
     total_count: 12,
     customer_notify: 1,
-    notes: { userId },
+    notes: { userId, workspaceId },
   });
 
+  // Find the pro plan row
+  const [proPlan] = await db
+    .select({ id: billingPlan.id })
+    .from(billingPlan)
+    .where(eq(billingPlan.name, "pro"))
+    .limit(1);
+
+  if (!proPlan) throw new Error("Pro billing plan not seeded in database.");
+
   await db
-    .update(userSchema)
-    .set({
+    .insert(workspaceSubscription)
+    .values({
+      workspaceId,
+      planId: proPlan.id,
+      status: "trialing",
       razorpaySubscriptionId: razorpaySubscription.id,
-      subscriptionStatus: "pending",
     })
-    .where(eq(userSchema.id, userId));
+    .onConflictDoUpdate({
+      target: workspaceSubscription.workspaceId,
+      set: {
+        razorpaySubscriptionId: razorpaySubscription.id,
+        status: "trialing",
+        planId: proPlan.id,
+      },
+    });
 
   return { subscriptionId: razorpaySubscription.id };
 }
 
 export async function cancelProSubscription(userId: string) {
-  const [user] = await db
-    .select({ razorpaySubscriptionId: userSchema.razorpaySubscriptionId })
-    .from(userSchema)
-    .where(eq(userSchema.id, userId))
+  const workspaceId = await getPrimaryWorkspaceId(userId);
+  if (!workspaceId) throw new Error("No workspace found.");
+
+  const [sub] = await db
+    .select({
+      razorpaySubscriptionId: workspaceSubscription.razorpaySubscriptionId,
+    })
+    .from(workspaceSubscription)
+    .where(eq(workspaceSubscription.workspaceId, workspaceId))
     .limit(1);
 
-  if (!user?.razorpaySubscriptionId) {
+  if (!sub?.razorpaySubscriptionId) {
     throw new Error("No active subscription found.");
   }
 
   const razorpay = getRazorpay();
-  await razorpay.subscriptions.cancel(user.razorpaySubscriptionId, 1);
+  await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, 1);
 
   await db
-    .update(userSchema)
-    .set({ subscriptionStatus: "canceled" })
-    .where(eq(userSchema.id, userId));
+    .update(workspaceSubscription)
+    .set({ status: "cancelled" })
+    .where(eq(workspaceSubscription.workspaceId, workspaceId));
 }

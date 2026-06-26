@@ -43,7 +43,11 @@ export async function getInstallationStatus(userId: string) {
   };
 }
 
-export async function saveInstallation(userId: string, installationId: number) {
+export async function saveInstallation(
+  userId: string,
+  installationId: number,
+  workspaceId: string
+) {
   const app = getGithubApp();
 
   const { data } = await app.octokit.request(
@@ -56,18 +60,19 @@ export async function saveInstallation(userId: string, installationId: number) {
   await db
     .insert(githubInstallation)
     .values({
-      id: crypto.randomUUID(),
       userId,
+      workspaceId,
       installationId,
       accountLogin,
       accountType: data.target_type ?? null,
     })
     .onConflictDoUpdate({
-      target: githubInstallation.userId,
+      target: githubInstallation.installationId,
       set: {
         installationId,
         accountLogin,
         accountType: data.target_type ?? null,
+        updatedAt: new Date(),
       },
     });
 }

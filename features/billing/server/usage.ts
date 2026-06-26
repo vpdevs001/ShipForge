@@ -26,8 +26,8 @@ export async function getReviewsThisMonth(userId: string): Promise<number> {
     .where(
       and(
         eq(pullRequest.installationId, installationId),
-        eq(pullRequest.status, "reviewed"),
-        gte(pullRequest.reviewedAt, startOfMonth(new Date()))
+        eq(pullRequest.reviewStatus, "reviewed"),
+        gte(pullRequest.updatedAt, startOfMonth(new Date()))
       )
     );
 
