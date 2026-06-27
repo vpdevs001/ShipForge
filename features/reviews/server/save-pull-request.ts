@@ -1,7 +1,12 @@
 import { PullRequestWebhookPayload } from "@/features/github/server/webhook-handler";
 import { db } from "@/lib/db";
-import { pullRequest, githubInstallation } from "@/lib/db/schema";
+import {
+  pullRequest,
+  githubInstallation,
+  featureRequest,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { findFeatureRequestId } from "@/features/feature-requests/server/link-pull-request";
 
 function getAuthorLogin(user: { login: string } | null): string | null {
   if (!user) {
@@ -49,6 +54,24 @@ export async function savePullRequest(payload: PullRequestWebhookPayload) {
       },
     })
     .returning();
+
+  const featureRequestId = await findFeatureRequestId(
+    (payload.pull_request as any).body ?? null,
+    (payload.pull_request as any).head.ref,
+    workspaceId
+  );
+
+  if (featureRequestId) {
+    await db
+      .update(pullRequest)
+      .set({ featureRequestId })
+      .where(eq(pullRequest.id, pr.id));
+
+    await db
+      .update(featureRequest)
+      .set({ status: "in_review" })
+      .where(eq(featureRequest.id, featureRequestId));
+  }
 
   return pr;
 }

@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Oxanium } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/provider/theme-provider";
-import { QueryProvider } from "@/components/provider/query-provider";
+import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-sans" });
@@ -42,7 +42,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <QueryProvider>
+        <TRPCProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -52,7 +52,7 @@ export default function RootLayout({
             {children}
             <Toaster />
           </ThemeProvider>
-        </QueryProvider>
+        </TRPCProvider>
       </body>
     </html>
   );

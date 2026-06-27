@@ -1,7 +1,14 @@
-import { generateText } from "ai";
+import { generateText, generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { REVIEW_MODEL, REVIEW_TEMPERATURE, REVIEW_MAX_TOKENS } from "../../ai/config";
+import { z } from "zod";
+import {
+  REVIEW_MODEL,
+  REVIEW_TEMPERATURE,
+  REVIEW_MAX_TOKENS,
+  FAST_MODEL,
+} from "../../ai/config";
 import { validateInput, validateOutput } from "../../ai/guardrails";
+import { PrdContent } from "../../prd/types";
 
 const SYSTEM_PROMPT = `You are an expert code reviewer with deep knowledge of software engineering best practices, security, and performance optimization.
 
@@ -41,20 +48,63 @@ Then use this structure if there are findings:
 - If the diff looks clean with no concerns, say so clearly in 1–2 sentences — do not invent problems
 - Tailor feedback to the repository language and conventions visible in the diff`;
 
-type ReviewInput = {
+export type ReviewInput = {
   repoFullName: string;
   title: string;
-  /** Chunks retrieved from the PR's Pinecone namespace */
   contextSnippets: string[];
-  /** Optional chunks from repo-sync namespace (full codebase context) */
   repoContextSnippets: string[];
+  prdContext: PrdContent | null;
 };
 
-type ReviewResult = {
+const IssueSchema = z.object({
+  issues: z.array(
+    z.object({
+      category: z.enum([
+        "requirement",
+        "security",
+        "performance",
+        "edge_case",
+        "code_quality",
+      ]),
+      severity: z.enum(["blocking", "non_blocking"]),
+      title: z.string(),
+      description: z.string(),
+      suggestion: z.string(),
+      filePath: z.string().optional(),
+      lineNumber: z.number().optional(),
+    })
+  ),
+  verdict: z.enum(["pass", "fail", "needs_changes"]),
+});
+
+export type ReviewResult = {
   text: string;
-  /** Total tokens consumed — written to token_usage table by the caller */
   tokensUsed: number;
+  issues: z.infer<typeof IssueSchema>["issues"];
+  verdict: z.infer<typeof IssueSchema>["verdict"];
 };
+
+function buildPrdSection(prd: PrdContent | null): string {
+  if (!prd) return "";
+
+  return `
+## Product Requirements Document
+
+You MUST evaluate the code changes against these requirements:
+
+**Problem being solved:** ${prd.problemStatement}
+
+**Goals:**
+${prd.goals.map((g) => `- ${g}`).join("\n")}
+
+**Acceptance Criteria:**
+${prd.acceptanceCriteria.map((c) => `- ${c}`).join("\n")}
+
+**Edge Cases to verify:**
+${prd.edgeCases.map((e) => `- ${e}`).join("\n")}
+
+For each acceptance criterion, explicitly state whether the implementation satisfies it, partially satisfies it, or misses it entirely.`;
+}
 
 function buildRepoContextSection(snippets: string[]): string {
   if (snippets.length === 0) return "";
@@ -71,6 +121,9 @@ export async function generateReview(
 ): Promise<ReviewResult> {
   const context = input.contextSnippets.join("\n\n---\n\n");
   const repoContextSection = buildRepoContextSection(input.repoContextSnippets);
+  const prdSection = buildPrdSection(input.prdContext);
+
+  const fullSystemPrompt = SYSTEM_PROMPT + prdSection;
 
   const userPrompt = validateInput(
     `Repository: ${input.repoFullName}
@@ -81,18 +134,30 @@ Code changes:
 ${context}${repoContextSection}`
   );
 
-  const { text, usage } = await generateText({
+  // Call 1: Markdown text
+  const { text, usage: textUsage } = await generateText({
     model: openai(REVIEW_MODEL),
     temperature: REVIEW_TEMPERATURE,
     maxOutputTokens: REVIEW_MAX_TOKENS,
-    system: SYSTEM_PROMPT,
+    system: fullSystemPrompt,
     prompt: userPrompt,
   });
 
-  const validated = validateOutput(text);
+  const validatedText = validateOutput(text);
+
+  // Call 2: Structured output
+  const { object, usage: objectUsage } = await generateObject({
+    model: openai(FAST_MODEL),
+    schema: IssueSchema,
+    system:
+      "You extract structured issues and a final verdict from a markdown code review.",
+    prompt: `Review Text:\n${validatedText}\n\nExtract the issues and verdict. If there are no issues, return an empty array and 'pass'. If there are blocking issues, verdict is 'needs_changes'.`,
+  });
 
   return {
-    text: validated,
-    tokensUsed: usage.totalTokens ?? 0,
+    text: validatedText,
+    tokensUsed: (textUsage.totalTokens ?? 0) + (objectUsage.totalTokens ?? 0),
+    issues: object.issues,
+    verdict: object.verdict,
   };
 }

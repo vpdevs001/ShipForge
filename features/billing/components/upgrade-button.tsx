@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { statusButtonClass } from "@/features/dashboard/lib/status-style";
-import { startProSubscription } from "@/lib/billing";
+import { trpc } from "@/trpc/client";
 
 type RazorpayCheckout = new (options: Record<string, unknown>) => {
   open: () => void;
@@ -24,6 +24,7 @@ const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 export function UpgradeButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const startSubscription = trpc.billing.startProSubscription.useMutation();
 
   async function handleUpgrade() {
     const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -40,7 +41,7 @@ export function UpgradeButton() {
     setLoading(true);
 
     try {
-      const { subscriptionId } = await startProSubscription();
+      const { subscriptionId } = await startSubscription.mutateAsync();
 
       const checkout = new window.Razorpay({
         key,

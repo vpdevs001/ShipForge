@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { cancelSubscription } from "@/lib/billing";
+import { trpc } from "@/trpc/client";
 import { statusButtonClass } from "@/features/dashboard/lib/status-style";
 
 type CancelSubscriptionButtonProps = {
@@ -17,12 +17,13 @@ export function CancelSubscriptionButton({
 }: CancelSubscriptionButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const cancelSub = trpc.billing.cancelSubscription.useMutation();
 
   async function handleCancel() {
     setLoading(true);
 
     try {
-      await cancelSubscription();
+      await cancelSub.mutateAsync();
       toast.success(
         "Subscription canceled. Pro access continues until renewal date."
       );

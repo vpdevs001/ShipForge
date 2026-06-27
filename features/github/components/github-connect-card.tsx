@@ -19,7 +19,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { disconnectGithubApp } from "../actions";
+import { useRouter } from "next/navigation";
+import { trpc } from "@/trpc/client";
+import { toast } from "sonner";
 
 type GithubConnectCardProps = {
   userId: string;
@@ -50,17 +52,27 @@ function DisconnectedDetails() {
 }
 
 function ConnectedActions() {
+  const router = useRouter();
+  const disconnect = trpc.github.disconnect.useMutation({
+    onSuccess: () => {
+      toast.success("GitHub App disconnected successfully");
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(`Failed to disconnect: ${error.message}`);
+    },
+  });
+
   return (
-    <form action={disconnectGithubApp}>
-      <Button
-        type="submit"
-        variant="outline"
-        className={statusButtonClass.danger}
-      >
-        <Plugs />
-        Disconnect GitHub App
-      </Button>
-    </form>
+    <Button
+      variant="outline"
+      className={statusButtonClass.danger}
+      onClick={() => disconnect.mutate()}
+      disabled={disconnect.isPending}
+    >
+      <Plugs />
+      {disconnect.isPending ? "Disconnecting…" : "Disconnect GitHub App"}
+    </Button>
   );
 }
 

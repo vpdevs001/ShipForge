@@ -1,8 +1,8 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { githubRepoKeys } from "@/features/github/lib/repos-query";
-import { syncRepoCodebase } from "../actions/repo-sync";
+import { trpc } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { RepoSyncStatus } from "../types";
 import { toast } from "sonner";
@@ -43,8 +43,7 @@ const SyncRepoButton = ({
 }: SyncRepoButtonProps) => {
   const queryClient = useQueryClient();
 
-  const syncRepo = useMutation({
-    mutationFn: () => syncRepoCodebase(repoFullName, branch),
+  const syncRepo = trpc.repoSync.sync.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: githubRepoKeys.all });
       toast.success(`Repo ${repoFullName} synced successfully`);
@@ -61,7 +60,7 @@ const SyncRepoButton = ({
       size="sm"
       variant="outline"
       disabled={syncing}
-      onClick={() => syncRepo.mutate()}
+      onClick={() => syncRepo.mutate({ repoFullName, branch })}
     >
       {getButtonLabel(syncStatus, syncRepo.isPending)}
     </Button>
