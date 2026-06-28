@@ -1,4 +1,5 @@
 import { inngest } from "@/features/inngest/client";
+import { prdGenerateRequested } from "@/features/inngest/events";
 import { db } from "@/lib/db";
 import {
   featureRequest,
@@ -8,16 +9,15 @@ import {
   conversationMessage,
 } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { REASONING_MODEL } from "@/features/ai/config";
 import { PRD_GENERATION_SYSTEM_PROMPT } from "../prompts/prd-generation";
 import { PrdSchema } from "../types";
 
 export const generatePrdFunction = inngest.createFunction(
-  { id: "generate-prd" },
-  { event: "prd/generate.requested" },
-  async ({ event, step, runId }) => {
+  { id: "generate-prd", triggers: [prdGenerateRequested] },
+  async ({ event, step }) => {
     const { featureRequestId, workspaceId } = event.data;
 
     // 1. Fetch context
@@ -39,7 +39,7 @@ export const generatePrdFunction = inngest.createFunction(
 
     if (!context.fr) throw new Error("Feature request not found");
 
-    // 2. Update status generating
+    // 2. Update status to generating
     await step.run("update-status-generating", async () => {
       await db
         .update(featureRequest)
@@ -61,7 +61,7 @@ export const generatePrdFunction = inngest.createFunction(
       if (queued) {
         await db
           .update(inngestWorkflow)
-          .set({ status: "running", inngestRunId: runId })
+          .set({ status: "running", inngestRunId: event.id })
           .where(eq(inngestWorkflow.id, queued.id));
       } else {
         await db.insert(inngestWorkflow).values({
@@ -69,27 +69,27 @@ export const generatePrdFunction = inngest.createFunction(
           workspaceId,
           type: "prd_gen",
           status: "running",
-          inngestRunId: runId,
+          inngestRunId: event.id,
         });
       }
     });
 
-    // 3. Generate PRD Content
+    // 3. Generate PRD content
     const generated = await step.run("generate-prd-content", async () => {
       const conversationText = context.messages
         .map((m) => `${m.role}: ${m.content}`)
         .join("\n");
 
-      const prompt = `Original request: ${context.fr.rawInput}\n\nConversation:\n${conversationText}`;
+      const prompt = `Original request: ${context.fr!.rawInput}\n\nConversation:\n${conversationText}`;
 
-      const { object, usage } = await generateObject({
+      const { output, usage } = await generateText({
         model: openai(REASONING_MODEL),
-        schema: PrdSchema,
+        output: Output.object({ schema: PrdSchema }),
         system: PRD_GENERATION_SYSTEM_PROMPT,
         prompt,
       });
 
-      return { prd: object, tokensUsed: usage.totalTokens };
+      return { prd: output, tokensUsed: usage.totalTokens ?? 0 };
     });
 
     // 4. Save PRD
@@ -113,19 +113,18 @@ export const generatePrdFunction = inngest.createFunction(
         .set({ status: "prd_ready" })
         .where(eq(featureRequest.id, featureRequestId));
 
-      // Update inngest workflow status to completed
-      const latestWorkflow = await db
+      const [latestWorkflow] = await db
         .select()
         .from(inngestWorkflow)
         .where(eq(inngestWorkflow.featureRequestId, featureRequestId))
         .orderBy(desc(inngestWorkflow.createdAt))
         .limit(1);
 
-      if (latestWorkflow.length > 0) {
+      if (latestWorkflow) {
         await db
           .update(inngestWorkflow)
           .set({ status: "completed" })
-          .where(eq(inngestWorkflow.id, latestWorkflow[0].id));
+          .where(eq(inngestWorkflow.id, latestWorkflow.id));
       }
     });
 

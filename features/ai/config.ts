@@ -15,6 +15,12 @@ export const REVIEW_MODEL = "gpt-4o" as const;
  */
 export const FAST_MODEL = "gpt-4o-mini" as const;
 
+/**
+ * Model for complex reasoning tasks: PRD generation, task generation.
+ * Uses gpt-4o for high-quality structured output.
+ */
+export const REASONING_MODEL = "gpt-4o" as const;
+
 /** Lower temperature = more deterministic, focused output. Good for reviews. */
 export const REVIEW_TEMPERATURE = 0.2;
 

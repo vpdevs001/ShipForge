@@ -1,4 +1,4 @@
-import { generateText, generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import {
@@ -146,9 +146,9 @@ ${context}${repoContextSection}`
   const validatedText = validateOutput(text);
 
   // Call 2: Structured output
-  const { object, usage: objectUsage } = await generateObject({
+  const { output: issueOutput, usage: objectUsage } = await generateText({
     model: openai(FAST_MODEL),
-    schema: IssueSchema,
+    output: Output.object({ schema: IssueSchema }),
     system:
       "You extract structured issues and a final verdict from a markdown code review.",
     prompt: `Review Text:\n${validatedText}\n\nExtract the issues and verdict. If there are no issues, return an empty array and 'pass'. If there are blocking issues, verdict is 'needs_changes'.`,
@@ -157,7 +157,7 @@ ${context}${repoContextSection}`
   return {
     text: validatedText,
     tokensUsed: (textUsage.totalTokens ?? 0) + (objectUsage.totalTokens ?? 0),
-    issues: object.issues,
-    verdict: object.verdict,
+    issues: issueOutput.issues,
+    verdict: issueOutput.verdict,
   };
 }

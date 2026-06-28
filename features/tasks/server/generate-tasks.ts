@@ -1,4 +1,5 @@
 import { inngest } from "@/features/inngest/client";
+import { tasksGenerateRequested } from "@/features/inngest/events";
 import { db } from "@/lib/db";
 import {
   featureRequest,
@@ -8,19 +9,18 @@ import {
   task,
 } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { REASONING_MODEL } from "@/features/ai/config";
 import { TASK_GENERATION_SYSTEM_PROMPT } from "../prompts/task-generation";
-import { TaskListSchema } from "../types";
+import { TaskSchema } from "../types";
 
 export const generateTasksFunction = inngest.createFunction(
-  { id: "generate-tasks" },
-  { event: "tasks/generate.requested" },
-  async ({ event, step, runId }) => {
+  { id: "generate-tasks", triggers: [tasksGenerateRequested] },
+  async ({ event, step }) => {
     const { prdId, featureRequestId, workspaceId } = event.data;
 
-    // 1. Fetch PRD Context & Update Workflow to Running
+    // 1. Fetch PRD + update workflow to running
     const context = await step.run("fetch-prd", async () => {
       const [prdData] = await db
         .select()
@@ -43,7 +43,7 @@ export const generateTasksFunction = inngest.createFunction(
       if (queued) {
         await db
           .update(inngestWorkflow)
-          .set({ status: "running", inngestRunId: runId })
+          .set({ status: "running", inngestRunId: event.id })
           .where(eq(inngestWorkflow.id, queued.id));
       }
 
@@ -57,14 +57,14 @@ export const generateTasksFunction = inngest.createFunction(
       const prdText = JSON.stringify(context.prdData, null, 2);
       const prompt = `Here is the PRD:\n\n${prdText}`;
 
-      const { object, usage } = await generateObject({
+      const { output, usage } = await generateText({
         model: openai(REASONING_MODEL),
-        schema: TaskListSchema,
+        output: Output.array({ element: TaskSchema }),
         system: TASK_GENERATION_SYSTEM_PROMPT,
         prompt,
       });
 
-      return { tasks: object, tokensUsed: usage.totalTokens };
+      return { tasks: output, tokensUsed: usage.totalTokens ?? 0 };
     });
 
     // 3. Save tasks
@@ -97,8 +97,7 @@ export const generateTasksFunction = inngest.createFunction(
         .set({ status: "in_development" })
         .where(eq(featureRequest.id, featureRequestId));
 
-      // Update inngest workflow if any
-      const latestWorkflow = await db
+      const [latestWorkflow] = await db
         .select()
         .from(inngestWorkflow)
         .where(
@@ -110,11 +109,11 @@ export const generateTasksFunction = inngest.createFunction(
         .orderBy(desc(inngestWorkflow.createdAt))
         .limit(1);
 
-      if (latestWorkflow.length > 0) {
+      if (latestWorkflow) {
         await db
           .update(inngestWorkflow)
           .set({ status: "completed" })
-          .where(eq(inngestWorkflow.id, latestWorkflow[0].id));
+          .where(eq(inngestWorkflow.id, latestWorkflow.id));
       }
     });
 

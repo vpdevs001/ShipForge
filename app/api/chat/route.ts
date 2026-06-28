@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { createTextStreamResponse } from "ai";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { conversationMessage, featureRequest } from "@/lib/db/schema";
@@ -49,7 +50,12 @@ export async function POST(req: NextRequest) {
   // 4. Run Chat Agent
   const result = await runChatAgent({
     featureRequestId,
-    messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
+    messages: messages.map(
+      (m: { role: "user" | "assistant"; content: string }) => ({
+        role: m.role,
+        content: m.content,
+      })
+    ),
     rawInput: fr.rawInput,
   });
 
@@ -76,7 +82,8 @@ export async function POST(req: NextRequest) {
   }
 
   // 5. Return stream and log usage on completion
-  return result.stream!.toDataStreamResponse({
+  return createTextStreamResponse({
+    stream: result.stream!.textStream,
     headers: {
       "x-ready-for-prd": result.readyForPrd ? "true" : "false",
     },

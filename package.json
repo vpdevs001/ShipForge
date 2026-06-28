@@ -15,7 +15,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.1",
+    "@ai-sdk/openai": "^4.0.2",
     "@base-ui/react": "^1.5.0",
     "@phosphor-icons/react": "^2.1.10",
     "@pinecone-database/pinecone": "^8.0.0",
@@ -23,7 +23,8 @@
     "@trpc/client": "^11.18.0",
     "@trpc/react-query": "^11.18.0",
     "@trpc/server": "^11.18.0",
-    "ai": "^7.0.3",
+    "@trpc/tanstack-react-query": "^11.18.0",
+    "ai": "^7.0.4",
     "better-auth": "^1.6.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -32,7 +33,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
-    "inngest": "^4.7.0",
+    "inngest": "^4.11.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.18.0",
     "next": "16.2.9",

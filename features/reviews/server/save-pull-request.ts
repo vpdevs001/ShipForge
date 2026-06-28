@@ -55,9 +55,14 @@ export async function savePullRequest(payload: PullRequestWebhookPayload) {
     })
     .returning();
 
+  const pr_data = payload.pull_request as typeof payload.pull_request & {
+    body?: string | null;
+    head: { sha: string; ref: string };
+  };
+
   const featureRequestId = await findFeatureRequestId(
-    (payload.pull_request as any).body ?? null,
-    (payload.pull_request as any).head.ref,
+    pr_data.body ?? null,
+    pr_data.head.ref,
     workspaceId
   );
 
