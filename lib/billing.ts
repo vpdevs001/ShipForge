@@ -1,6 +1,6 @@
 "use server";
 
-import { getServerSession } from "@/features/auth/actions";
+import { getServerSession } from "@/features/auth/utils/get-server-session";
 import {
   cancelProSubscription,
   createProSubscription,

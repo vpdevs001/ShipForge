@@ -7,7 +7,7 @@ import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/routes";
 import { getInstallationStatus } from "@/features/github/server/installation";
 
 import { Button } from "@/components/ui/button";
-import { requireAuth } from "@/features/auth/actions";
+import { requireAuth } from "@/features/auth/utils/require-auth";
 import { RepoList } from "@/features/dashboard/components/repo-list";
 
 export const metadata: Metadata = {

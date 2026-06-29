@@ -16,7 +16,9 @@ export function getGithubApp(): App {
 }
 
 export function getGithubInstallUrl(userId: string) {
-  const url = new URL(`https://github.com/apps/codxreview/installations/new`);
+  const slug = process.env.GITHUB_APP_SLUG;
+  if (!slug) throw new Error("GITHUB_APP_SLUG env variable is not set");
+  const url = new URL(`https://github.com/apps/${slug}/installations/new`);
   // `state` round-trips through GitHub so we can link the installation to this user.
   url.searchParams.set("state", userId);
   return url.toString();

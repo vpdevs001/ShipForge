@@ -1,4 +1,4 @@
-import { requireAuth } from "@/features/auth/actions";
+import { requireAuth } from "@/features/auth/utils/require-auth";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { GithubConnectCard } from "@/features/github/components/github-connect-card";
 import { getInstallationStatus } from "@/features/github/server/installation";

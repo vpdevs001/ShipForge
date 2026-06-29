@@ -5,7 +5,7 @@
  * visitors are redirected to sign-in by `requireAuth()`.
  */
 
-import { requireAuth } from "@/features/auth/actions";
+import { requireAuth } from "@/features/auth/utils/require-auth";
 
 /**
  * Guard wrapper for protected route segments.

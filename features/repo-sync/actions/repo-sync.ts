@@ -1,6 +1,6 @@
 "use server";
 
-import { getServerSession } from "@/features/auth/actions";
+import { getServerSession } from "@/features/auth/utils/get-server-session";
 import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/routes";
 import { getUserInstallationId } from "@/features/github/server/installation";
 import { getPrimaryWorkspaceId } from "@/lib/db/workspace";

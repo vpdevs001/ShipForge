@@ -5,7 +5,7 @@
  * plan label for the sidebar user menu and wraps pages in `DashboardShell`.
  */
 
-import { requireAuth } from "@/features/auth/actions";
+import { requireAuth } from "@/features/auth/utils/require-auth";
 import { DashboardShell } from "@/features/dashboard/components/dashboard-shell";
 
 export default async function DashboardLayout({

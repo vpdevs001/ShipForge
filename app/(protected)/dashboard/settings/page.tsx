@@ -1,4 +1,4 @@
-import { requireAuth } from "@/features/auth/actions";
+import { requireAuth } from "@/features/auth/utils/require-auth";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { SettingsContent } from "@/features/dashboard/components/settings-content";
 import { getUserSettings } from "@/features/settings/server/get-settings";

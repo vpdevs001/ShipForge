@@ -23,7 +23,3 @@ export async function signInWithGithub(formData: FormData) {
     redirect(result.url);
   }
 }
-
-export { getServerSession } from "../utils/get-server-session";
-export { requireAuth } from "../utils/require-auth";
-export { requireUnAuth } from "../utils/require-unauth";
