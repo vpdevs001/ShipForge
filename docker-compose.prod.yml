@@ -18,14 +18,18 @@ services:
       retries: 10
 
   app:
+    app:
     build:
       context: .
-    args:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_ADMIN_KEY: ${OPENAI_ADMIN_KEY}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
-
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        OPENAI_API_KEY: ${OPENAI_API_KEY}
+        OPENAI_ADMIN_KEY: ${OPENAI_ADMIN_KEY}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+        BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+    env_file:
+      - .env
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_ADMIN_KEY: ${OPENAI_ADMIN_KEY}
