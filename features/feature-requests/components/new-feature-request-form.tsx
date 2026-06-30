@@ -120,8 +120,8 @@ export function NewFeatureRequestForm({
           className="resize-y"
         />
         <p className="text-xs text-muted-foreground">
-          Write as much or as little as you know. The clarification chat
-          will gather the rest.
+          Write as much or as little as you know. The clarification chat will
+          gather the rest.
         </p>
       </div>
 

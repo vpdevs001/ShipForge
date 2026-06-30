@@ -87,7 +87,9 @@ export function PrdPanel({
             className="gap-1.5"
           >
             <CheckIcon className="size-4" />
-            {approveMutation.isPending ? "Approving…" : "Approve & Generate Tasks"}
+            {approveMutation.isPending
+              ? "Approving…"
+              : "Approve & Generate Tasks"}
           </Button>
         )}
         {currentPrd?.status === "final" && (

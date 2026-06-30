@@ -1,6 +1,10 @@
 "use client";
 
-import { ArrowSquareOutIcon, GithubLogoIcon, PlugsIcon } from "@phosphor-icons/react";
+import {
+  ArrowSquareOutIcon,
+  GithubLogoIcon,
+  PlugsIcon,
+} from "@phosphor-icons/react";
 
 import type { GithubInstallationStatus } from "@/features/dashboard/lib/types";
 import {
@@ -161,8 +165,8 @@ export function GithubConnectCard({
               <div>
                 <CardTitle>GitHub App</CardTitle>
                 <CardDescription>
-                  Install the ShipForge reviewer app on your GitHub account
-                  or organization to access public and private repositories.
+                  Install the ShipForge reviewer app on your GitHub account or
+                  organization to access public and private repositories.
                 </CardDescription>
               </div>
             </div>

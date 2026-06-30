@@ -46,7 +46,10 @@ export const projectRouter = router({
         .select()
         .from(project)
         .where(
-          and(eq(project.workspaceId, input.workspaceId), eq(project.slug, slug))
+          and(
+            eq(project.workspaceId, input.workspaceId),
+            eq(project.slug, slug)
+          )
         )
         .limit(1);
 
@@ -61,7 +64,8 @@ export const projectRouter = router({
           workspaceId: input.workspaceId,
           name: repoName,
           slug: slug,
-          description: input.description ?? `Project synced for ${input.repoFullName}`,
+          description:
+            input.description ?? `Project synced for ${input.repoFullName}`,
           createdBy: ctx.session.user.id,
         })
         .returning();

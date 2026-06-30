@@ -1,0 +1,22 @@
+shipforge.vedpandey.in {
+	# Caddy automatically provisions and renews a Let's Encrypt certificate
+	# for this domain — no manual TLS setup needed, as long as DNS for
+	# shipforge.vedpandey.in points at this VPS's IP before first start.
+
+	reverse_proxy app:3000
+
+	encode gzip zstd
+
+	# Reasonable security headers for a logged-in SaaS dashboard.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

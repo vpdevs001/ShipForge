@@ -15,7 +15,10 @@ import { db } from "@/lib/db";
 import { pullRequest } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
-import { statusBadge, statusTextClass } from "@/features/dashboard/lib/status-style";
+import {
+  statusBadge,
+  statusTextClass,
+} from "@/features/dashboard/lib/status-style";
 import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/routes";
 import { GitBranchIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { formatDistanceToNow } from "date-fns";
@@ -33,9 +36,7 @@ function reviewStatusTone(
 }
 
 /** Maps a PR merge status to a badge tone. */
-function prStatusTone(
-  status: string
-): "success" | "info" | "neutral" {
+function prStatusTone(status: string): "success" | "info" | "neutral" {
   if (status === "merged") return "success";
   if (status === "open") return "info";
   return "neutral";
@@ -88,9 +89,8 @@ export default async function ReviewsPage() {
               },
               {
                 label: "Failed",
-                value: pullRequests.filter(
-                  (pr) => pr.reviewStatus === "failed"
-                ).length,
+                value: pullRequests.filter((pr) => pr.reviewStatus === "failed")
+                  .length,
                 tone: "danger",
               },
             ].map(({ label, value, tone }) => (

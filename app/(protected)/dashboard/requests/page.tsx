@@ -167,7 +167,11 @@ export default async function RequestsPage({
                         <p className="truncate font-medium text-foreground">
                           {fr.title}
                         </p>
-                        <span className={statusBadge(statusTone(fr.status as FeatureRequestStatus))}>
+                        <span
+                          className={statusBadge(
+                            statusTone(fr.status as FeatureRequestStatus)
+                          )}
+                        >
                           {fr.status.replace(/_/g, " ")}
                         </span>
                       </div>

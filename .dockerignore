@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.github
+*.pem
+.env
+.env.*
+!.env.example
+npm-debug.log*
+.DS_Store
+*.tsbuildinfo
+.vscode
+README.md
+DEPLOYMENT.md
+IMPLEMENTATION-PLAN.md

@@ -379,10 +379,7 @@ export default async function DashboardPage() {
                 Icon: Rocket,
               },
             ].map(({ n, name, desc, Icon }) => (
-              <div
-                key={n}
-                className="flex flex-col gap-2 bg-card px-4 py-4"
-              >
+              <div key={n} className="flex flex-col gap-2 bg-card px-4 py-4">
                 <span className="font-mono text-xs text-muted-foreground">
                   {n}
                 </span>

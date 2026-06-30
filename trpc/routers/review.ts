@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pullRequest, review, reviewIssue, approval, featureRequest } from "@/lib/db/schema";
+import {
+  pullRequest,
+  review,
+  reviewIssue,
+  approval,
+  featureRequest,
+} from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { assertCan } from "@/lib/rebac";
 
@@ -51,7 +57,7 @@ export const reviewRouter = router({
         .orderBy(desc(review.createdAt))
         .limit(1);
 
-      let issues: typeof reviewIssue.$inferSelect[] = [];
+      let issues: (typeof reviewIssue.$inferSelect)[] = [];
       let prApproval: typeof approval.$inferSelect | null = null;
 
       if (latestReview) {
@@ -65,7 +71,7 @@ export const reviewRouter = router({
           .from(approval)
           .where(eq(approval.reviewId, latestReview.id))
           .limit(1);
-        
+
         prApproval = existingApproval ?? null;
       }
 
@@ -136,7 +142,8 @@ export const reviewRouter = router({
         .returning();
 
       // Update the status of the feature request
-      const nextStatus = input.decision === "approved" ? "approved" : "fix_needed";
+      const nextStatus =
+        input.decision === "approved" ? "approved" : "fix_needed";
       await db
         .update(featureRequest)
         .set({ status: nextStatus })

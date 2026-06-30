@@ -29,7 +29,10 @@ type ApprovalPanelProps = {
   existingApproval: ExistingApproval;
 };
 
-export function ApprovalPanel({ reviewId, existingApproval }: ApprovalPanelProps) {
+export function ApprovalPanel({
+  reviewId,
+  existingApproval,
+}: ApprovalPanelProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const [comment, setComment] = useState(existingApproval?.comment ?? "");

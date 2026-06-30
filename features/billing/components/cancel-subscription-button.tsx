@@ -19,7 +19,9 @@ export function CancelSubscriptionButton({
   const router = useRouter();
   const trpc = useTRPC();
   const [loading, setLoading] = useState(false);
-  const cancelSub = useMutation(trpc.billing.cancelSubscription.mutationOptions());
+  const cancelSub = useMutation(
+    trpc.billing.cancelSubscription.mutationOptions()
+  );
 
   async function handleCancel() {
     setLoading(true);

@@ -7,15 +7,48 @@ import { motion, useReducedMotion } from "motion/react";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { UserMenuWithSession } from "@/features/auth/components/user-menu";
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, ChatsIcon, FileTextIcon, CheckSquareIcon, ShieldCheckIcon, RocketIcon, GitBranchIcon } from "@phosphor-icons/react";
+import {
+  ArrowRightIcon,
+  ChatsIcon,
+  FileTextIcon,
+  CheckSquareIcon,
+  ShieldCheckIcon,
+  RocketIcon,
+  GitBranchIcon,
+} from "@phosphor-icons/react";
 
 const PIPELINE_STAGES = [
   { id: 1, name: "Intake", icon: FileTextIcon, desc: "PM submits raw request" },
-  { id: 2, name: "Clarification", icon: ChatsIcon, desc: "AI asks follow-up details" },
-  { id: 3, name: "PRD Gen", icon: FileTextIcon, desc: "Inngest builds structured doc" },
-  { id: 4, name: "Tasking", icon: CheckSquareIcon, desc: "Explodes PRD into Kanban list" },
-  { id: 5, name: "Review", icon: ShieldCheckIcon, desc: "Webhook triggers AI PR review" },
-  { id: 6, name: "Ship", icon: RocketIcon, desc: "Merge & deploy verified features" },
+  {
+    id: 2,
+    name: "Clarification",
+    icon: ChatsIcon,
+    desc: "AI asks follow-up details",
+  },
+  {
+    id: 3,
+    name: "PRD Gen",
+    icon: FileTextIcon,
+    desc: "Inngest builds structured doc",
+  },
+  {
+    id: 4,
+    name: "Tasking",
+    icon: CheckSquareIcon,
+    desc: "Explodes PRD into Kanban list",
+  },
+  {
+    id: 5,
+    name: "Review",
+    icon: ShieldCheckIcon,
+    desc: "Webhook triggers AI PR review",
+  },
+  {
+    id: 6,
+    name: "Ship",
+    icon: RocketIcon,
+    desc: "Merge & deploy verified features",
+  },
 ];
 
 /** Stagger container for the hero headline/subhead/badge entrance. */
@@ -113,9 +146,10 @@ export default function Home() {
             variants={heroItem}
             className="max-w-2xl text-muted-foreground text-base sm:text-lg font-sans leading-relaxed mt-2"
           >
-            An engineering control plane that automates product handoffs. 
-            Write ideas, chat with clarification agents, generate approved PRDs, 
-            generate task lists, and run automated AI code reviews on every pull request.
+            An engineering control plane that automates product handoffs. Write
+            ideas, chat with clarification agents, generate approved PRDs,
+            generate task lists, and run automated AI code reviews on every pull
+            request.
           </motion.p>
         </motion.div>
 
@@ -204,19 +238,30 @@ export default function Home() {
               PRD: Stripe Billing Integration
             </div>
             <div className="text-xs text-muted-foreground">
-              <span className="font-semibold block text-foreground mb-1">Problem Statement</span>
-              We need to transition from manual billing invoices to a self-serve automated payment flow to decrease onboarding friction for the Pro subscription tier.
+              <span className="font-semibold block text-foreground mb-1">
+                Problem Statement
+              </span>
+              We need to transition from manual billing invoices to a self-serve
+              automated payment flow to decrease onboarding friction for the Pro
+              subscription tier.
             </div>
             <div className="text-xs text-muted-foreground">
-              <span className="font-semibold block text-foreground mb-1">User Stories</span>
+              <span className="font-semibold block text-foreground mb-1">
+                User Stories
+              </span>
               <span className="block border-l border-primary/50 pl-2 py-0.5 mb-1 italic">
-                &ldquo;As a Pro user, I want to pay with credit card, so I can instantly unlock high limits.&rdquo;
+                &ldquo;As a Pro user, I want to pay with credit card, so I can
+                instantly unlock high limits.&rdquo;
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
-              <span className="font-semibold block text-foreground mb-1">Acceptance Criteria</span>
+              <span className="font-semibold block text-foreground mb-1">
+                Acceptance Criteria
+              </span>
               <ul className="list-disc list-inside space-y-1">
-                <li>Stripe webhook updates subscription status in real-time.</li>
+                <li>
+                  Stripe webhook updates subscription status in real-time.
+                </li>
                 <li>Upgrade widget falls back gracefully if Stripe is down.</li>
               </ul>
             </div>
@@ -241,7 +286,9 @@ export default function Home() {
             </div>
             <div className="font-heading font-semibold text-lg flex items-center justify-between">
               <span>PR #412: stripe-billing-hook</span>
-              <span className="font-mono text-xs text-muted-foreground">#stripe-branch</span>
+              <span className="font-mono text-xs text-muted-foreground">
+                #stripe-branch
+              </span>
             </div>
             <div className="flex flex-col gap-3">
               <div className="border border-red-500/20 bg-red-500/5 p-3 rounded text-xs">
@@ -250,10 +297,17 @@ export default function Home() {
                   BLOCKING: CSRF vulnerability in Stripe webhook handler
                 </span>
                 <p className="text-muted-foreground mt-1">
-                  Path: <code className="font-mono text-[11px] bg-muted/50 px-1 rounded">/api/stripe/webhook/route.ts#L42</code>
+                  Path:{" "}
+                  <code className="font-mono text-[11px] bg-muted/50 px-1 rounded">
+                    /api/stripe/webhook/route.ts#L42
+                  </code>
                 </p>
                 <p className="text-muted-foreground mt-1 text-[11px]">
-                  <strong>Suggestion:</strong> Verify signature using <code className="font-mono text-[10px]">stripe.webhooks.constructEvent</code> instead of parsing request body directly.
+                  <strong>Suggestion:</strong> Verify signature using{" "}
+                  <code className="font-mono text-[10px]">
+                    stripe.webhooks.constructEvent
+                  </code>{" "}
+                  instead of parsing request body directly.
                 </p>
               </div>
 
@@ -263,7 +317,10 @@ export default function Home() {
                   NON-BLOCKING: Missing exponential backoff on DB retry
                 </span>
                 <p className="text-muted-foreground mt-1">
-                  Path: <code className="font-mono text-[11px] bg-muted/50 px-1 rounded">/lib/db/billing.ts#L88</code>
+                  Path:{" "}
+                  <code className="font-mono text-[11px] bg-muted/50 px-1 rounded">
+                    /lib/db/billing.ts#L88
+                  </code>
                 </p>
               </div>
             </div>
@@ -274,11 +331,20 @@ export default function Home() {
       {/* Footer */}
       <footer className="mt-auto border-t border-border bg-background py-8 text-center text-xs text-muted-foreground">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span>&copy; {new Date().getFullYear()} ShipForge. Built for engineering teams.</span>
+          <span>
+            &copy; {new Date().getFullYear()} ShipForge. Built for engineering
+            teams.
+          </span>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-foreground">Docs</a>
-            <a href="#" className="hover:text-foreground">Security</a>
-            <a href="#" className="hover:text-foreground">Github</a>
+            <a href="#" className="hover:text-foreground">
+              Docs
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Security
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Github
+            </a>
           </div>
         </div>
       </footer>

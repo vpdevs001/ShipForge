@@ -17,7 +17,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatPanel } from "./chat-panel";
 import { PrdPanel } from "./prd-panel";
 import { TasksPanel } from "./tasks-panel";
-import { ChatsIcon, FileTextIcon, CheckSquareIcon } from "@phosphor-icons/react";
+import {
+  ChatsIcon,
+  FileTextIcon,
+  CheckSquareIcon,
+} from "@phosphor-icons/react";
 import type { InferSelectModel } from "drizzle-orm";
 import type { prd, task } from "@/lib/db/schema";
 

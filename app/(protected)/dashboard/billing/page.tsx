@@ -12,7 +12,10 @@
 
 import { requireAuth } from "@/features/auth/utils/require-auth";
 import { getUserSubscription } from "@/features/billing/server/subscription";
-import { getUsageSummary, FREE_MONTHLY_LIMIT } from "@/features/billing/server/usage";
+import {
+  getUsageSummary,
+  FREE_MONTHLY_LIMIT,
+} from "@/features/billing/server/usage";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { PLAN_DETAILS } from "@/features/settings/lib/plan-details";
 import { statusBadge } from "@/features/dashboard/lib/status-style";
@@ -149,8 +152,8 @@ export default async function BillingPage() {
                     usagePct >= 90
                       ? "bg-red-500"
                       : usagePct >= 70
-                      ? "bg-amber-500"
-                      : "bg-primary"
+                        ? "bg-amber-500"
+                        : "bg-primary"
                   )}
                   style={{ width: `${usagePct}%` }}
                 />

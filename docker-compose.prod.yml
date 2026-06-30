@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # Not published to the host — only reachable by other containers on
+    # this compose network. The app talks to it via the service name
+    # `postgres` in DATABASE_URL, e.g. postgresql://user:pass@postgres:5432/db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3000"
+    # No `ports:` mapping — Caddy reverse-proxies to this container over
+    # the internal compose network, so the app is never exposed directly.
+
+  # One-off migration runner. Built from the `builder` stage (which still
+  # has the full node_modules, including drizzle-kit) rather than the slim
+  # `runner` image used by `app`. Not started by `docker compose up` —
+  # invoked explicitly via `docker compose run --rm migrate` in the
+  # deploy script, before the app container is (re)started.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["bun", "run", "db:migrate"]
+    profiles: ["tools"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

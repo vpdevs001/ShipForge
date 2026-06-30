@@ -27,7 +27,13 @@ import { eq, desc } from "drizzle-orm";
 import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/routes";
 import { statusBadge } from "@/features/dashboard/lib/status-style";
-import { ArrowLeftIcon, ShieldCheckIcon, GitBranchIcon, WarningCircleIcon, CheckCircleIcon } from "@phosphor-icons/react/ssr";
+import {
+  ArrowLeftIcon,
+  ShieldCheckIcon,
+  GitBranchIcon,
+  WarningCircleIcon,
+  CheckCircleIcon,
+} from "@phosphor-icons/react/ssr";
 import { ApprovalPanel } from "@/features/reviews/components/approval-panel";
 import { formatDistanceToNow } from "date-fns";
 
@@ -146,7 +152,9 @@ export default async function ReviewDetailPage({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className={statusBadge(verdictTone(pr.reviewStatus ?? null))}>
+              <span
+                className={statusBadge(verdictTone(pr.reviewStatus ?? null))}
+              >
                 {pr.reviewStatus?.replace(/_/g, " ") ?? "pending"}
               </span>
               {latestReview?.verdict && (
@@ -185,8 +193,8 @@ export default async function ReviewDetailPage({
                   latestReview.verdict === "pass"
                     ? "border-green-500/30 bg-green-500/5"
                     : latestReview.verdict === "needs_changes"
-                    ? "border-amber-500/30 bg-amber-500/5"
-                    : "border-red-500/30 bg-red-500/5"
+                      ? "border-amber-500/30 bg-amber-500/5"
+                      : "border-red-500/30 bg-red-500/5"
                 }`}
               >
                 {latestReview.verdict === "pass" ? (
@@ -205,8 +213,8 @@ export default async function ReviewDetailPage({
                     {latestReview.verdict === "pass"
                       ? "AI Review Passed"
                       : latestReview.verdict === "needs_changes"
-                      ? "Changes Requested"
-                      : "AI Review Failed"}
+                        ? "Changes Requested"
+                        : "AI Review Failed"}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {issues.length === 0

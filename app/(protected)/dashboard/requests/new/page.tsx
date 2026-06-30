@@ -48,12 +48,15 @@ export default async function NewRequestPage() {
         </Link>
 
         {workspaceId ? (
-          <NewFeatureRequestForm workspaceId={workspaceId} projects={projects} />
+          <NewFeatureRequestForm
+            workspaceId={workspaceId}
+            projects={projects}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-16 text-center">
             <p className="text-sm text-muted-foreground">
-              You&apos;re not part of a workspace yet. Connect a GitHub repo
-              to create one automatically.
+              You&apos;re not part of a workspace yet. Connect a GitHub repo to
+              create one automatically.
             </p>
             <Link
               href={DASHBOARD_ROUTES.github}
