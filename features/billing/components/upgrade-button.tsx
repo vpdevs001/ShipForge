@@ -3,11 +3,12 @@
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { statusButtonClass } from "@/features/dashboard/lib/status-style";
-import { trpc } from "@/trpc/client";
+import { useTRPC } from "@/trpc/client";
 
 type RazorpayCheckout = new (options: Record<string, unknown>) => {
   open: () => void;
@@ -23,8 +24,11 @@ const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 
 export function UpgradeButton() {
   const router = useRouter();
+  const trpc = useTRPC();
   const [loading, setLoading] = useState(false);
-  const startSubscription = trpc.billing.startProSubscription.useMutation();
+  const startSubscription = useMutation(
+    trpc.billing.startProSubscription.mutationOptions()
+  );
 
   async function handleUpgrade() {
     const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -46,7 +50,7 @@ export function UpgradeButton() {
       const checkout = new window.Razorpay({
         key,
         subscription_id: subscriptionId,
-        name: "Chai Code Reviewer",
+        name: "ShipForge",
         description: "Pro plan — unlimited AI reviews",
         handler: () => {
           toast.success(

@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { trpc } from "@/trpc/client";
+import { useTRPC } from "@/trpc/client";
 import { statusButtonClass } from "@/features/dashboard/lib/status-style";
 
 type CancelSubscriptionButtonProps = {
@@ -16,8 +17,9 @@ export function CancelSubscriptionButton({
   disabled = false,
 }: CancelSubscriptionButtonProps) {
   const router = useRouter();
+  const trpc = useTRPC();
   const [loading, setLoading] = useState(false);
-  const cancelSub = trpc.billing.cancelSubscription.useMutation();
+  const cancelSub = useMutation(trpc.billing.cancelSubscription.mutationOptions());
 
   async function handleCancel() {
     setLoading(true);

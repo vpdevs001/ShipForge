@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowSquareOut, GithubLogo, Plugs } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, GithubLogoIcon, PlugsIcon } from "@phosphor-icons/react";
 
 import type { GithubInstallationStatus } from "@/features/dashboard/lib/types";
 import {
@@ -20,7 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { trpc } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
 
 type GithubConnectCardProps = {
@@ -53,15 +54,18 @@ function DisconnectedDetails() {
 
 function ConnectedActions() {
   const router = useRouter();
-  const disconnect = trpc.github.disconnect.useMutation({
-    onSuccess: () => {
-      toast.success("GitHub App disconnected successfully");
-      router.refresh();
-    },
-    onError: (error) => {
-      toast.error(`Failed to disconnect: ${error.message}`);
-    },
-  });
+  const trpc = useTRPC();
+  const disconnect = useMutation(
+    trpc.github.disconnect.mutationOptions({
+      onSuccess: () => {
+        toast.success("GitHub App disconnected successfully");
+        router.refresh();
+      },
+      onError: (error: { message: string }) => {
+        toast.error(`Failed to disconnect: ${error.message}`);
+      },
+    })
+  );
 
   return (
     <Button
@@ -70,7 +74,7 @@ function ConnectedActions() {
       onClick={() => disconnect.mutate()}
       disabled={disconnect.isPending}
     >
-      <Plugs />
+      <PlugsIcon />
       {disconnect.isPending ? "Disconnecting…" : "Disconnect GitHub App"}
     </Button>
   );
@@ -83,9 +87,9 @@ function DisconnectedActions({ installUrl }: { installUrl: string }) {
       render={<a href={installUrl} />}
       className={statusButtonClass.success}
     >
-      <GithubLogo />
+      <GithubLogoIcon />
       Install GitHub App
-      <ArrowSquareOut className="size-3 opacity-80" />
+      <ArrowSquareOutIcon className="size-3 opacity-80" />
     </Button>
   );
 }
@@ -152,13 +156,13 @@ export function GithubConnectCard({
                   iconWrapperClass
                 )}
               >
-                <GithubLogo className="size-5" />
+                <GithubLogoIcon className="size-5" />
               </span>
               <div>
                 <CardTitle>GitHub App</CardTitle>
                 <CardDescription>
-                  Install the Chai reviewer app on your GitHub account or
-                  organization to access public and private repositories.
+                  Install the ShipForge reviewer app on your GitHub account
+                  or organization to access public and private repositories.
                 </CardDescription>
               </div>
             </div>
