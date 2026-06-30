@@ -6,6 +6,8 @@ import { taskRouter } from "./routers/task";
 import { githubRouter } from "./routers/github";
 import { billingRouter } from "./routers/billing";
 import { repoSyncRouter } from "./routers/repo-sync";
+import { projectRouter } from "./routers/project";
+import { reviewRouter } from "./routers/review";
 
 export const appRouter = router({
   healthcheck: publicProcedure.query(() => {
@@ -18,6 +20,8 @@ export const appRouter = router({
   github: githubRouter,
   billing: billingRouter,
   repoSync: repoSyncRouter,
+  project: projectRouter,
+  review: reviewRouter,
 });
 
 export type AppRouter = typeof appRouter;

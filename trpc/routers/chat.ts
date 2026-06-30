@@ -24,4 +24,32 @@ export const chatRouter = router({
 
       return messages;
     }),
+
+  saveMessage: protectedProcedure
+    .input(
+      z.object({
+        featureRequestId: z.string(),
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertCan(
+        ctx.session.user.id,
+        "creator",
+        "feature_request",
+        input.featureRequestId
+      );
+
+      const [msg] = await db
+        .insert(conversationMessage)
+        .values({
+          featureRequestId: input.featureRequestId,
+          role: input.role,
+          content: input.content,
+        })
+        .returning();
+
+      return msg;
+    }),
 });

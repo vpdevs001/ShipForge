@@ -33,7 +33,7 @@ export function DashboardSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip="ChaiCodeAIReview"
+              tooltip="ShipForge"
               render={
                 <Link href={DASHBOARD_ROUTES.overview}>
                   <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-none bg-sidebar">
@@ -46,8 +46,12 @@ export function DashboardSidebar({
                     />
                   </span>
                   <span className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                    <span className="truncate font-medium">
-                      ChaiCodeAIReview
+                    {/* Product name — matches the landing page brand */}
+                    <span className="truncate font-heading font-semibold tracking-wide text-foreground">
+                      ShipForge
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      AI Build Pipeline
                     </span>
                   </span>
                 </Link>

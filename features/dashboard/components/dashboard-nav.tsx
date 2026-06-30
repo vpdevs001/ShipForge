@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutIcon, GitBranch, GithubLogo, Gear } from "@phosphor-icons/react";
+import {
+  LayoutIcon,
+  GitBranch,
+  GithubLogo,
+  Gear,
+  Chats,
+  CreditCard,
+  ShieldCheck,
+  ListChecks,
+} from "@phosphor-icons/react";
 
 import {
   DASHBOARD_NAV_ITEMS,
@@ -17,11 +26,17 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+/** Maps route icon keys (from routes.ts) to Phosphor icon components. */
 const NAV_ICONS = {
   "layout-dashboard": LayoutIcon,
   "folder-git-2": GitBranch,
+  "git-branch": GitBranch,
+  chats: Chats,
+  "credit-card": CreditCard,
   github: GithubLogo,
   settings: Gear,
+  "shield-check": ShieldCheck,
+  "list-checks": ListChecks,
 } as const;
 
 function isNavActive(pathname: string, href: DashboardRoute) {

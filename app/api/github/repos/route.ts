@@ -1,4 +1,4 @@
-import { getServerSession } from "@/features/auth/actions";
+import { getServerSession } from "@/features/auth/utils/get-server-session";
 import { getUserInstallationId } from "@/features/github/server/installation";
 import { getInstallationReposPage } from "@/features/github/server/repos";
 import { getRepoSyncStatuses } from "@/features/repo-sync/server/repo-sync";

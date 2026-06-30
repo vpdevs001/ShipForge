@@ -1,6 +1,6 @@
 import { DASHBOARD_ROUTES } from "@/features/dashboard/lib/routes";
 import { saveInstallation } from "@/features/github/server/installation";
-import { getServerSession } from "@/features/auth/actions";
+import { getServerSession } from "@/features/auth/utils/get-server-session";
 import { getPrimaryWorkspaceId } from "@/lib/db/workspace";
 import { redirect } from "next/navigation";
 
