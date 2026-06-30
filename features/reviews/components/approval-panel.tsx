@@ -9,12 +9,13 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { statusBadge } from "@/features/dashboard/lib/status-style";
-import { Check, X } from "@phosphor-icons/react";
+import { CheckIcon, XIcon } from "@phosphor-icons/react";
 
 type ExistingApproval = {
   id: string;
@@ -30,7 +31,7 @@ type ApprovalPanelProps = {
 
 export function ApprovalPanel({ reviewId, existingApproval }: ApprovalPanelProps) {
   const trpc = useTRPC();
-  const qc = useQueryClient();
+  const router = useRouter();
   const [comment, setComment] = useState(existingApproval?.comment ?? "");
   const [submitted, setSubmitted] = useState(!!existingApproval);
 
@@ -38,6 +39,9 @@ export function ApprovalPanel({ reviewId, existingApproval }: ApprovalPanelProps
     trpc.review.submitApproval.mutationOptions({
       onSuccess: () => {
         setSubmitted(true);
+        // The parent route is a Server Component — refresh it so the
+        // feature request's updated status reflects immediately.
+        router.refresh();
       },
     })
   );
@@ -99,7 +103,7 @@ export function ApprovalPanel({ reviewId, existingApproval }: ApprovalPanelProps
               onClick={() => submit("approved")}
               disabled={submitMutation.isPending}
             >
-              <Check className="size-4" />
+              <CheckIcon className="size-4" />
               Approve
             </Button>
             <Button
@@ -109,7 +113,7 @@ export function ApprovalPanel({ reviewId, existingApproval }: ApprovalPanelProps
               onClick={() => submit("rejected")}
               disabled={submitMutation.isPending}
             >
-              <X className="size-4" />
+              <XIcon className="size-4" />
               Request Changes
             </Button>
           </div>

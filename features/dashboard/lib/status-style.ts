@@ -11,6 +11,16 @@ export const statusBadgeClass = {
   neutral: "border-border bg-muted text-muted-foreground",
 } as const;
 
+/** Plain text color for a tone, with no border or background — for stat
+ * values, counters, or other emphasis that shouldn't look like a pill. */
+export const statusTextClass = {
+  success: "text-green-700 dark:text-green-400",
+  warning: "text-amber-700 dark:text-amber-400",
+  danger: "text-red-700 dark:text-red-400",
+  info: "text-blue-700 dark:text-blue-400",
+  neutral: "text-foreground",
+} as const;
+
 /** Button variants for primary actions like "Install" or "Disconnect". */
 export const statusButtonClass = {
   success:
