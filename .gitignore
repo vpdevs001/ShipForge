@@ -45,3 +45,8 @@ next-env.d.ts
 /lib/generated/prisma
 Implementation-Plan.md
 task.md
+
+# SSH deploy keys — never commit these
+shipforge_deploy_key
+shipforge_deploy_key.pub
+*.pem
