@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutIcon,
-  GitBranch,
-  GithubLogo,
-  Gear,
-  Chats,
-  CreditCard,
-  ShieldCheck,
-  ListChecks,
+  GitBranchIcon,
+  GithubLogoIcon,
+  GearIcon,
+  ChatsIcon,
+  CreditCardIcon,
+  ShieldCheckIcon,
+  ListChecksIcon,
 } from "@phosphor-icons/react";
 
 import {
@@ -29,14 +29,14 @@ import {
 /** Maps route icon keys (from routes.ts) to Phosphor icon components. */
 const NAV_ICONS = {
   "layout-dashboard": LayoutIcon,
-  "folder-git-2": GitBranch,
-  "git-branch": GitBranch,
-  chats: Chats,
-  "credit-card": CreditCard,
-  github: GithubLogo,
-  settings: Gear,
-  "shield-check": ShieldCheck,
-  "list-checks": ListChecks,
+  "folder-git-2": GitBranchIcon,
+  "git-branch": GitBranchIcon,
+  chats: ChatsIcon,
+  "credit-card": CreditCardIcon,
+  github: GithubLogoIcon,
+  settings: GearIcon,
+  "shield-check": ShieldCheckIcon,
+  "list-checks": ListChecksIcon,
 } as const;
 
 function isNavActive(pathname: string, href: DashboardRoute) {
