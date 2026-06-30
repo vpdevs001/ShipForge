@@ -20,13 +20,14 @@ COPY . .
 # These are only needed to satisfy build-time checks (e.g. env var access
 # in route handlers evaluated at build time) — real secrets are injected
 # at *runtime* via docker-compose's env_file, never baked into the image.
+ARG NEXT_PUBLIC_RAZORPAY_KEY_ID
+ENV NEXT_PUBLIC_RAZORPAY_KEY_ID=$NEXT_PUBLIC_RAZORPAY_KEY_ID
+
+COPY .env.build .env
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
-ENV OPENAI_API_KEY="sk-build-placeholder"
-ENV BETTER_AUTH_SECRET="build-time-placeholder-secret-not-real"
-ENV BETTER_AUTH_URL="http://localhost:3000"
 
 RUN bun run build
+RUN rm .env
 # ─────────────────────────────────────────────────────────────────────────
 # 3. runner — minimal final image, runs as a non-root user.
 #    Note: deliberately Node here, not Bun. Next.js's standalone output is
