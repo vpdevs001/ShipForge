@@ -20,15 +20,17 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    expose:
-      - "3000"
+    args:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_ADMIN_KEY: ${OPENAI_ADMIN_KEY}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_ADMIN_KEY: ${OPENAI_ADMIN_KEY}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
     # No `ports:` mapping — Caddy reverse-proxies to this container over
     # the internal compose network, so the app is never exposed directly.
 
