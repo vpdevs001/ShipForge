@@ -22,6 +22,9 @@ COPY . .
 # at *runtime* via docker-compose's env_file, never baked into the image.
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+ENV OPENAI_API_KEY="sk-build-placeholder"
+ENV BETTER_AUTH_SECRET="build-time-placeholder-secret-not-real"
+ENV BETTER_AUTH_URL="http://localhost:3000"
 
 RUN bun run build
 # ─────────────────────────────────────────────────────────────────────────
