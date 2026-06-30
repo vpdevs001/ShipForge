@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # ─────────────────────────────────────────────────────────────────────────
 # 1. deps — install dependencies in isolation so they're cached separately
 #    from app source changes (rebuilds are fast unless package.json moves).
